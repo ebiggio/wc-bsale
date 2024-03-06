@@ -8,10 +8,16 @@ class WC_Bsale_Admin {
 	private $settings;
 
 	public function __construct() {
-		require_once plugin_dir_path( __FILE__ ) . 'class-wc-bsale-admin-settings.php';
+		// If the plugin is active, load the admin settings and the hooks
+		if ( in_array( 'wc-bsale/wc-bsale.php', apply_filters( 'active_plugins', get_option( 'active_plugins' ) ) ) ) {
+			require_once plugin_dir_path( __FILE__ ) . 'class-wc-bsale-admin-settings.php';
 
-		add_action( 'admin_menu', array( $this, 'add_admin_menu' ) );
-		$this->settings = new WC_Bsale_Admin_Settings();
+			add_action( 'admin_menu', array( $this, 'add_admin_menu' ) );
+			$this->settings = new WC_Bsale_Admin_Settings();
+
+			require_once plugin_dir_path( __FILE__ ) . 'class-wc-bsale-admin-hooks.php';
+			new WC_Bsale_Admin_Hooks();
+		}
 	}
 
 	public function add_admin_menu() {
