@@ -16,6 +16,7 @@ namespace WC_Bsale;
 defined( 'ABSPATH' ) || exit;
 
 const WC_BSALE_PLUGIN_VERSION = '1.0';
+const WC_BSALE_PLUGIN_DIR = __DIR__;
 
 // Load the plugin text domain
 load_plugin_textdomain( 'wc_bsale', false, dirname( plugin_basename( __FILE__ ) ) . '/languages' );

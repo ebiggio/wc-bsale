@@ -1,5 +1,7 @@
 <?php
 
+namespace WC_Bsale;
+
 defined( 'ABSPATH' ) || exit;
 
 class WC_Bsale_Admin_Settings {
