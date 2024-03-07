@@ -1,0 +1,30 @@
+.wc-bsale-notice {
+    padding: 5px;
+    margin: 10px 0;
+    border-left: 4px solid transparent;
+}
+
+.wc-bsale-notice p {
+    margin: 0;
+    padding: 5px;
+}
+
+.wc-bsale-notice-warning {
+    background-color: #fff3cd;
+    border-left: 4px solid #ffc107;
+}
+
+.wc-bsale-info-success {
+    background-color: #d4edda;
+    border-left: 4px solid #28a745;
+}
+
+.wc-bsale-notice-error {
+    background-color: #f8d7da;
+    border-left: 4px solid #dc3545;
+}
+
+.wc-bsale-notice-info {
+    background-color: #cce5ff;
+    border-color: #007bff;
+}

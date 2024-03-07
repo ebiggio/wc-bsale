@@ -10,6 +10,11 @@ class WC_Bsale_Admin {
 	public function __construct() {
 		// If the plugin is active, load the admin settings and the hooks
 		if ( in_array( 'wc-bsale/wc-bsale.php', apply_filters( 'active_plugins', get_option( 'active_plugins' ) ) ) ) {
+			// Plugin's admin styles
+			add_action( 'admin_enqueue_scripts', function () {
+				wp_enqueue_style( 'wc-bsale-admin', WC_BSALE_PLUGIN_URL . 'assets/css/wc-bsale.css', array(), WC_BSALE_PLUGIN_VERSION );
+			} );
+
 			require_once plugin_dir_path( __FILE__ ) . 'class-wc-bsale-admin-settings.php';
 
 			add_action( 'admin_menu', array( $this, 'add_admin_menu' ) );
