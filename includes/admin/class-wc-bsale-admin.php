@@ -22,12 +22,12 @@ class WC_Bsale_Admin {
 
 	public function add_admin_menu() {
 		add_menu_page(
-			'WC Bsale Settings', // Page title
-			'WC Bsale', // Menu title
+			'WooCommerce Bsale plugin settings', // Page title
+			'WooCommerce Bsale', // Menu title
 			'manage_options', // Capability
-			'wc_bsale_settings_page', // Menu slug
+			'wc-bsale-settings', // Menu slug
 			array( $this->settings, 'settings_page_content' ), // Callback
-			'dashicons-admin-generic' // Icon URL
+			WC_BSALE_PLUGIN_URL . 'assets/images/bsale_icon_bw.png' // Icon
 		);
 	}
 }
