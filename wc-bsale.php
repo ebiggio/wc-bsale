@@ -15,7 +15,7 @@ namespace WC_Bsale;
 // Prevent direct access to this file
 defined( 'ABSPATH' ) || exit;
 
-const WC_BSALE_PLUGIN_VERSION = '1.0';
+const WC_BSALE_PLUGIN_VERSION = '0.1';
 const WC_BSALE_PLUGIN_DIR = __DIR__;
 define( "WC_Bsale\WC_BSALE_PLUGIN_URL", plugin_dir_url( __FILE__ ) );
 
