@@ -48,8 +48,8 @@ class WC_Bsale_Admin_Settings {
 
 		global $settings_tabs;
 		$settings_tabs = array(
-			''       => 'Main settings',
-			'stock'  => 'Stock synchronization',
+			''      => 'Main settings',
+			'stock' => 'Stock synchronization',
 			//'prices' => 'Prices synchronization',
 			//'orders' => 'Orders events',
 		);
@@ -63,8 +63,6 @@ class WC_Bsale_Admin_Settings {
 		switch ( $tab ) {
 			case 'stock':
 				require_once plugin_dir_path( __FILE__ ) . 'settings/class-wc-bsale-settings-stock.php';
-				$stock_settings = new WC_Bsale_Admin_Settings_Stock();
-				$stock_settings->stock_settings_page_content();
 				break;
 			default:
 				require_once plugin_dir_path( __FILE__ ) . 'settings/class-wc-bsale-settings-main.php';
