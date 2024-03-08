@@ -1,57 +1,82 @@
 <?php
+/**
+ * Class WC_Bsale_Admin_Settings
+ *
+ * This class is responsible for the settings of the plugin
+ *
+ * @package WC_Bsale
+ */
 
 namespace WC_Bsale;
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * WC Bsale Admin Settings class
+ */
 class WC_Bsale_Admin_Settings {
 	public function __construct() {
 		add_action( 'admin_init', array( $this, 'init_settings' ) );
 	}
 
-	public function init_settings() {
-		// Register a settings section
-		add_settings_section(
-			'wc_bsale_main_section', // ID
-			'Main Settings', // Title
-			array( $this, 'settings_section_description' ), // Callback
-			'wc_bsale_settings_page' // Page
+	/**
+	 * Initialize and register all the settings of the plugin
+	 *
+	 * @return void
+	 */
+	public function init_settings(): void {
+		register_setting( 'wc_bsale_main_settings_group', 'wc_bsale_sandbox_access_token' );
+		register_setting( 'wc_bsale_stock_settings_group', 'wc_bsale_admin_stock' );
+		register_setting( 'wc_bsale_stock_settings_group', 'wc_bsale_storefront_stock' );
+	}
+
+	/**
+	 * Manages and displays the settings page according to the selected tab
+	 *
+	 * @return void
+	 */
+	public function settings_page_content(): void {
+		// Check if the user has the necessary permissions to access the settings
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+
+		// Set a success message if the settings were saved
+		if ( isset( $_GET['settings-updated'] ) ) {
+			add_settings_error( 'wc_bsale_messages', 'wc_bsale_message', 'Settings saved', 'updated' );
+		}
+
+		global $settings_tabs;
+		$settings_tabs = array(
+			''       => 'Main settings',
+			'stock'  => 'Stock synchronization',
+			//'prices' => 'Prices synchronization',
+			//'orders' => 'Orders events',
 		);
 
-		// Register a new field in the section
-		add_settings_field(
-			'wc_bsale_sandbox_access_token', // ID
-			'Sandbox Access Token', // Title
-			array( $this, 'settings_field_callback' ), // Callback
-			'wc_bsale_settings_page', // Page
-			'wc_bsale_main_section' // Section
-		);
+		// Include the view that contains the tabs for all the settings
+		include plugin_dir_path( __FILE__ ) . 'settings/views/html-admin-settings.php';
 
-		// Register the setting so WordPress knows to handle our settings
-		register_setting( 'wc_bsale_settings_group', 'wc_bsale_sandbox_access_token' );
-	}
+		// Include classes according to the selected tab
+		$tab = $_GET['tab'] ?? '';
 
-	public function settings_page_content() {
-		?>
-		<div class="wrap">
-			<h2>WC Bsale Settings</h2>
-			<form action="options.php" method="POST">
-				<?php
-				settings_fields( 'wc_bsale_settings_group' );
-				do_settings_sections( 'wc_bsale_settings_page' );
-				submit_button();
-				?>
-			</form>
-		</div>
-		<?php
-	}
+		switch ( $tab ) {
+			case 'stock':
+				require_once plugin_dir_path( __FILE__ ) . 'settings/class-wc-bsale-settings-stock.php';
+				$stock_settings = new WC_Bsale_Admin_Settings_Stock();
+				$stock_settings->stock_settings_page_content();
+				break;
+			default:
+				require_once plugin_dir_path( __FILE__ ) . 'settings/class-wc-bsale-settings-main.php';
+				$main_settings = new WC_Bsale_Admin_Settings_Main();
+				$main_settings->main_settings_page_content();
+				break;
+		}
 
-	public function settings_section_description() {
-		echo '<p>Main settings for the WC Bsale plugin.</p>';
-	}
-
-	public function settings_field_callback() {
-		$setting = get_option( 'wc_bsale_sandbox_access_token' );
-		echo '<input type="text" name="wc_bsale_sandbox_access_token" value="' . esc_attr( $setting ) . '"/>';
+		// Submit button for the form
+		submit_button();
+		// Close HTML elements of the view
+		echo '</form>';
+		echo '</div>';
 	}
 }
