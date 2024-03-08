@@ -66,8 +66,6 @@ class WC_Bsale_Admin_Settings {
 				break;
 			default:
 				require_once plugin_dir_path( __FILE__ ) . 'settings/class-wc-bsale-settings-main.php';
-				$main_settings = new WC_Bsale_Admin_Settings_Main();
-				$main_settings->main_settings_page_content();
 				break;
 		}
 
