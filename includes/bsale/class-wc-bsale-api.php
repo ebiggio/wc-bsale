@@ -82,7 +82,6 @@ class WC_Bsale_API {
 		// Get only the first item of the collection
 		$stock = $stock_list->items[0];
 
-		// TODO Could also be $stock->quantity?
 		return (int)$stock->quantityAvailable;
 	}
 }

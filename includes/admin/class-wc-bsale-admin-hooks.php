@@ -61,6 +61,98 @@ class WC_Bsale_Admin_Hooks {
 			return;
 		}
 
+		$product = wc_get_product( $_GET['post'] );
+
+		// Check if the product is a variable product. If so, we don't need to sync its stock, but the stock of its variations
+		if ( $product->is_type( 'variable' ) ) {
+			$variations = $product->get_children();
+
+			// Store the variations that need to be synced
+			$variations_to_sync = array();
+
+			foreach ( $variations as $variation_id ) {
+				$variation = wc_get_product( $variation_id );
+
+				// For a variation to be synced, it needs to have a SKU and be marked with the "Manage stock" option
+				if ( ! empty( $variation->get_sku() && $variation->managing_stock() ) ) {
+					$variations_to_sync[ $variation_id ] = $variation;
+				}
+			}
+
+			// We compare the total variations and the ones that qualify for syncing. If they are not the same, we show a message to the user notifying them of this
+			if ( count( $variations ) !== count( $variations_to_sync ) ) {
+				$message = esc_html__( 'This variable product has variations that are not marked with the "Manage stock" option or have no SKU. If you would like to sync their stock with Bsale, please enable this option and add a SKU to them.', 'wc-bsale' );
+				$this->show_admin_notice( $message, 'warning' );
+			}
+
+			// If there are no variations to sync, we don't need to continue
+			if ( empty( $variations_to_sync ) ) {
+				return;
+			}
+
+			$bsale_api = new WC_Bsale_API();
+
+			// If the user has clicked the "Sync Stock" button or the settings to sync automatically is enabled, we update the stock of the variations with the stock in Bsale
+			if ( isset( $_POST['wc_bsale_sync_stock'] ) || isset( $this->admin_stock_settings['auto_update'] ) ) {
+				$variations_synced = array();
+
+				foreach ( $variations_to_sync as $variation_id => $variation ) {
+					$sku         = $variation->get_sku();
+					$bsale_stock = $bsale_api->get_stock_by_code( $sku );
+
+					if ( $bsale_stock !== false ) {
+						wc_update_product_stock( $variation, $bsale_stock );
+						$variations_synced[ $variation_id ] = $variation;
+					}
+				}
+			}
+
+			foreach ( $variations_to_sync as $variation_id => $variation ) {
+				if ( isset( $variations_synced[ $variation_id ] ) ) {
+					$message = sprintf( esc_html__( 'The stock of the variations "%s" has been synced with the stock in Bsale.', 'wc-bsale' ), $variation->get_sku() );
+					$this->show_admin_notice( $message, 'success' );
+
+					continue;
+				}
+
+				$sku         = $variation->get_sku();
+				$bsale_stock = $bsale_api->get_stock_by_code( $sku );
+
+				// If the variation has no stock in Bsale, we show a message to the user notifying them of this
+				if ( $bsale_stock === false ) {
+					$message = sprintf( esc_html__( 'No stock was found in Bsale for the code [%s]. Please check if this variation\'s SKU exists in Bsale.', 'wc-bsale' ), $sku );
+					$this->show_admin_notice( $message, 'warning' );
+				} else {
+					// If the variation has stock in Bsale, we compare it with the stock in WooCommerce
+					$wc_stock = (int) get_post_meta( $variation->get_id(), '_stock', true );
+
+					if ( $wc_stock === $bsale_stock ) {
+						$message = sprintf( esc_html__( 'The stock of the variation "%s" is the same as the stock in Bsale.', 'wc-bsale' ), $variation->get_sku() );
+						$this->show_admin_notice( $message, 'success' );
+					} else {
+						add_action( 'admin_notices', function () use ( $wc_stock, $bsale_stock, $variation ) {
+							$message = sprintf( esc_html__( 'The stock of the variation "%s" [%s] is different than the stock in Bsale [%s]. Would you like to sync them?', 'wc-bsale' ), $variation->get_sku(), $wc_stock, $bsale_stock );
+							?>
+							<div class="notice notice-warning is-dismissible">
+								<p><?php echo $message; ?></p>
+								<form action="" method="POST">
+									<input type="hidden" name="wc_bsale_sync_stock" value="1"/>
+									<?php submit_button( esc_html__( 'Update stock with Bsale' ) ); ?>
+								</form>
+							</div>
+							<?php
+						} );
+					}
+				}
+			}
+
+			return;
+		}
+
+		/*
+		 * If we reach this point, it means that the product is not a variable product. We then need to sync its stock with Bsale
+		 */
+
 		// Get the product and its SKU
 		$product = wc_get_product( $_GET['post'] );
 		$sku     = $product->get_sku();
@@ -81,7 +173,6 @@ class WC_Bsale_Admin_Hooks {
 			return;
 		}
 
-		// TODO Check if product is variable and sync all variations
 		$wc_stock    = (int) get_post_meta( $product->get_id(), '_stock', true );
 		$bsale_api   = new WC_Bsale_API();
 		$bsale_stock = $bsale_api->get_stock_by_code( $sku );
