@@ -1,9 +1,8 @@
 <?php
 /**
- * Main settings page
+ * Main settings page.
  *
- * Manages the main settings page of the plugin
- *
+ * @class   WC_Bsale_Admin_Settings_Main
  * @package WC_Bsale
  */
 
@@ -16,7 +15,7 @@ defined( 'ABSPATH' ) || exit;
  */
 class WC_Bsale_Admin_Settings_Main {
 	/**
-	 * Manages the main settings page
+	 * Manages the main settings page.
 	 *
 	 * @return void
 	 */

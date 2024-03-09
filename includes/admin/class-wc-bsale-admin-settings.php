@@ -1,9 +1,8 @@
 <?php
 /**
- * Class WC_Bsale_Admin_Settings
+ * Settings manager for the plugin.
  *
- * This class is responsible for the settings of the plugin
- *
+ * @class   WC_Bsale_Admin_Settings
  * @package WC_Bsale
  */
 
@@ -12,7 +11,7 @@ namespace WC_Bsale;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * WC Bsale Admin Settings class
+ * WC_Bsale_Admin_Settings class
  */
 class WC_Bsale_Admin_Settings {
 	public function __construct() {
@@ -20,7 +19,7 @@ class WC_Bsale_Admin_Settings {
 	}
 
 	/**
-	 * Initialize and register all the settings of the plugin
+	 * Initializes and registers all the settings of the plugin.
 	 *
 	 * @return void
 	 */
@@ -31,7 +30,7 @@ class WC_Bsale_Admin_Settings {
 	}
 
 	/**
-	 * Manages and displays the settings page according to the selected tab
+	 * Displays a settings page according to the selected tab.
 	 *
 	 * @return void
 	 */

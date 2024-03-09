@@ -1,9 +1,8 @@
 <?php
 /**
- * Stock settings page
+ * Stock settings page.
  *
- * Manages the stock settings page of the plugin
- *
+ * @class   WC_Bsale_Admin_Settings_Stock
  * @package WC_Bsale
  */
 
@@ -25,7 +24,7 @@ class WC_Bsale_Admin_Settings_Stock {
 	}
 
 	/**
-	 * Manages the stock settings page
+	 * Manages the stock settings page.
 	 *
 	 * @return void
 	 */

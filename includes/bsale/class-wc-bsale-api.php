@@ -1,9 +1,18 @@
 <?php
+/**
+ * Manages the communication with the Bsale API.
+ *
+ * @class   WC_Bsale_API
+ * @package WC_Bsale
+ */
 
 namespace WC_Bsale;
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * WC_Bsale_API class
+ */
 class WC_Bsale_API {
 	private string $api_url;
 	private string $access_token;
@@ -16,7 +25,7 @@ class WC_Bsale_API {
 	}
 
 	/**
-	 * Makes an HTTP GET request to the Bsale API
+	 * Makes an HTTP GET request to the Bsale API.
 	 *
 	 * @param string $endpoint The endpoint to request
 	 *
@@ -55,7 +64,7 @@ class WC_Bsale_API {
 	}
 
 	/**
-	 * Retrieves a product's stock by its code
+	 * Retrieves a product's stock by its code.
 	 *
 	 * @param $code string The product's code
 	 *

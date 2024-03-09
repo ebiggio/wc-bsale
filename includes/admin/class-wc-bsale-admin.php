@@ -1,9 +1,10 @@
 <?php
 /**
- * WC Bsale Admin
+ * Entry point for the plugin's admin functionality.
  *
- * Entry point for the plugin's admin functionality. It enqueues the admin styles and adds the settings page to the admin menu.
+ * It includes the admin styles and adds the settings page to the admin menu.
  *
+ * @class   WC_Bsale_Admin
  * @package WC_Bsale
  */
 
@@ -12,7 +13,7 @@ namespace WC_Bsale;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * WC Bsale Admin class
+ * WC_Bsale_Admin class
  */
 class WC_Bsale_Admin {
 	private $settings;
@@ -32,7 +33,7 @@ class WC_Bsale_Admin {
 	}
 
 	/**
-	 * Add the settings page to the admin menu in the back office of WordPress
+	 * Adds the settings page to the admin menu in the back office of WordPress.
 	 *
 	 * @return void
 	 */

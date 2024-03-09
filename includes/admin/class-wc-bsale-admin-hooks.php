@@ -1,9 +1,8 @@
 <?php
 /**
- * WC Bsale Admin Hooks
+ * Hooks for the admin side of the plugin.
  *
- * This class contains the hooks for the admin side of the plugin
- *
+ * @class   WC_Bsale_Admin_Hooks
  * @package WC_Bsale
  */
 
@@ -12,7 +11,7 @@ namespace WC_Bsale;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * WC Bsale Admin Hooks class
+ * WC_Bsale_Admin_Hooks class
  */
 class WC_Bsale_Admin_Hooks {
 	private mixed $admin_stock_settings;
@@ -31,7 +30,7 @@ class WC_Bsale_Admin_Hooks {
 	}
 
 	/**
-	 * Shows a dismissible notice in the admin
+	 * Shows a dismissible notice in the admin.
 	 *
 	 * @param string $message The message to show, escaped for safe use in HTML (i.e., passed through esc_html() or similar)
 	 * @param string $type    The type of notice. Can be 'info', 'success', 'warning' or 'error'
@@ -48,6 +47,13 @@ class WC_Bsale_Admin_Hooks {
 		} );
 	}
 
+	/**
+	 * Checks if the product is a variable or not, and syncs its stock with Bsale if needed.
+	 *
+	 * For a product or variation to be synced, it needs to have a SKU and be marked with the "Manage stock" option. It also needs to have stock in Bsale.
+	 *
+	 * @return void
+	 */
 	public function wc_bsale_product_edit_hook(): void {
 		$screen = get_current_screen();
 
