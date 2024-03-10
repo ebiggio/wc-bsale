@@ -71,7 +71,7 @@ class WC_Bsale_API {
 	 * @return int|bool The product's stock, or false if an empty code was provided or if no stock was found in Bsale
 	 */
 	public function get_stock_by_code( string $code ): bool|int {
-		if ( $code === '' ) {
+		if ( '' === $code ) {
 			return false;
 		}
 
@@ -85,7 +85,7 @@ class WC_Bsale_API {
 			return false;
 		}
 
-		if ( $stock_list->count === 0 ) {
+		if ( 0 === $stock_list->count ) {
 			// No stock found for the code provided (doesn't mean that the product doesn't exist in Bsale; just that it has no stock)
 			return false;
 		}

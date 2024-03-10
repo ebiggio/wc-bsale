@@ -57,7 +57,7 @@ class WC_Bsale_Admin_Hooks {
 	public function wc_bsale_product_edit_hook(): void {
 		$screen = get_current_screen();
 
-		if ( ! $screen->id === 'product' ) {
+		if ( 'product' !== $screen->id ) {
 			// We are not in the product edit screen
 			return;
 		}
@@ -106,7 +106,7 @@ class WC_Bsale_Admin_Hooks {
 					$sku         = $variation->get_sku();
 					$bsale_stock = $bsale_api->get_stock_by_code( $sku );
 
-					if ( $bsale_stock !== false ) {
+					if ( false !== $bsale_stock ) {
 						wc_update_product_stock( $variation, $bsale_stock );
 						$variations_synced[ $variation_id ] = $variation;
 					}
@@ -125,7 +125,7 @@ class WC_Bsale_Admin_Hooks {
 				$bsale_stock = $bsale_api->get_stock_by_code( $sku );
 
 				// If the variation has no stock in Bsale, we show a message to the user notifying them of this
-				if ( $bsale_stock === false ) {
+				if ( false === $bsale_stock ) {
 					$message = sprintf( esc_html__( 'No stock was found in Bsale for the code [%s]. Please check if this variation\'s SKU exists in Bsale.', 'wc-bsale' ), $sku );
 					$this->show_admin_notice( $message, 'warning' );
 				} else {
@@ -185,7 +185,7 @@ class WC_Bsale_Admin_Hooks {
 
 		// If the product has no stock in Bsale, we show a message to the user notifying them of this
 		// TODO $bsale_stock can be false because of an error in the API request. We should handle this case (perhaps by returning a WP_Error object from the API class and checking for it here)
-		if ( $bsale_stock === false ) {
+		if ( false === $bsale_stock ) {
 			$message = sprintf( esc_html__( 'No stock was found in Bsale for the code [%s]. Please check if this product\'s SKU exists in Bsale.', 'wc-bsale' ), $sku );
 			$this->show_admin_notice( $message, 'warning' );
 
