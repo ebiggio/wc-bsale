@@ -66,7 +66,7 @@ class WC_Bsale_API {
 	/**
 	 * Retrieves a product's stock by its code.
 	 *
-	 * @param $code string The product's code
+	 * @param $code string The product's code. We assume that, in WooCommerce, the code is the product's SKU.
 	 *
 	 * @return int|bool The product's stock, or false if an empty code was provided or if no stock was found in Bsale
 	 */
@@ -77,7 +77,9 @@ class WC_Bsale_API {
 
 		$api_endpoint = 'stocks.json?code=' . $code;
 
-		if ( ! $stock_list = $this->make_api_request( $api_endpoint ) ) {
+		$stock_list = $this->make_api_request( $api_endpoint );
+
+		if ( ! $stock_list ) {
 			// There was an error making the request
 			// TODO Log the error
 			return false;
