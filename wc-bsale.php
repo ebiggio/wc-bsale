@@ -40,5 +40,7 @@ if ( in_array( 'wc-bsale/wc-bsale.php', apply_filters( 'active_plugins', get_opt
 	// And away we go
 	if ( is_admin() ) {
 		require_once plugin_dir_path( __FILE__ ) . 'includes/admin/class-wc-bsale-admin.php';
+	} else {
+		require_once plugin_dir_path( __FILE__ ) . 'includes/storefront/class-wc-bsale-storefront-hooks.php';
 	}
 }

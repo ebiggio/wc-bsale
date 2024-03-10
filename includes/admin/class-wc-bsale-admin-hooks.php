@@ -1,6 +1,6 @@
 <?php
 /**
- * Hooks for the admin side of the plugin.
+ * Hooks for the admin side of the plugin related to stock syncing.
  *
  * @class   WC_Bsale_Admin_Hooks
  * @package WC_Bsale
