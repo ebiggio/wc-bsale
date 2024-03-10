@@ -9,7 +9,7 @@ global $settings_tabs;
 
 ?>
 <div class="wrap">
-	<h1><img src="<?php echo WC_BSALE_PLUGIN_URL . 'assets/images/bsale_icon.png' ?>"> WooCommerce Bsale plugin settings</h1>
+	<h1><img src="<?php echo WC_BSALE_PLUGIN_URL . 'assets/images/bsale_icon.png' ?>" alt=""> WooCommerce Bsale plugin settings</h1>
 
 	<?php settings_errors('wc_bsale_messages'); ?>
 

@@ -31,7 +31,7 @@ class WC_Bsale_Admin_Settings_Stock {
 	public function stock_settings_page_content(): void {
 		?>
 		<div class="wc-bsale-notice wc-bsale-notice-info">
-			<p><span class="dashicons dashicons-info"></span> For a product to be synchronized with Bsale, it must have a SKU and the "Manage stock" option enabled.</p>
+			<p><span class="dashicons dashicons-visibility"></span> For a product to be synchronized with Bsale, it must have a SKU and the "Manage stock" option enabled.</p>
 		</div>
 		<?php
 		add_settings_section(
@@ -42,7 +42,7 @@ class WC_Bsale_Admin_Settings_Stock {
 		);
 
 		add_settings_field(
-			'wc_bsale_products_sync',
+			'wc_bsale_admin_stock_edit',
 			'When editing a product',
 			array( $this, 'admin_edit_settings_field_callback' ),
 			'wc-bsale-settings-stock',
@@ -57,9 +57,17 @@ class WC_Bsale_Admin_Settings_Stock {
 		);
 
 		add_settings_field(
-			'wc_bsale_products_sync',
-			'When a customer interacts with a product',
-			array( $this, 'storefront_edit_settings_field_callback' ),
+			'wc_bsale_storefront_stock_cart',
+			'During cart interaction',
+			array( $this, 'storefront_cart_settings_field_callback' ),
+			'wc-bsale-settings-stock',
+			'wc_bsale_stock_section'
+		);
+
+		add_settings_field(
+			'wc_bsale_storefront_stock_checkout',
+			'During checkout interaction',
+			array( $this, 'storefront_checkout_settings_field_callback' ),
 			'wc-bsale-settings-stock',
 			'wc_bsale_stock_section'
 		);
@@ -70,6 +78,11 @@ class WC_Bsale_Admin_Settings_Stock {
 
 	public function admin_stock_settings_section_description(): void {
 		echo '<p>Settings to manage the stock synchronization between WooCommerce and Bsale on the admin side (back office).</p>';
+		echo
+		'<div class="wc-bsale-notice wc-bsale-notice-warning">
+			<p><span class="dashicons dashicons-warning"></span> When updating the stock of a product from the admin, the update will trigger native WooCommerce events for stock management. Please
+				keep this in mind when using features like "Out of stock threshold" and backorders, or when using other plugins that interact with the stock of the products.</p>
+		</div>';
 	}
 
 	public function admin_edit_settings_field_callback(): void {
@@ -80,8 +93,8 @@ class WC_Bsale_Admin_Settings_Stock {
 				<input type="checkbox" id="wc_bsale_admin_stock_edit" name="wc_bsale_admin_stock[edit]" value="1" <?php checked( 1, $this->admin_settings['edit'] ?? false ); ?> />
 				Check the stock with Bsale when editing a product
 			</label>
-			<p class="description">When editing a product, the stock will be checked with Bsale. If the stock doesn't match, a confirmation message will be displayed to the user asking if they want to update the stock in WooCommerce with the stock in
-				Bsale.</p>
+			<p class="description">When editing a product, the stock will be checked with Bsale. If the stock doesn't match, a confirmation message will be displayed to the user asking if they want
+				to update the stock in WooCommerce with the stock in Bsale.</p>
 		</fieldset>
 		<br>
 		<div style="margin-left: 20px">
@@ -108,24 +121,29 @@ class WC_Bsale_Admin_Settings_Stock {
 		echo '<p>Settings to manage the stock synchronization between WooCommerce and Bsale on the storefront side (front office).</p>';
 	}
 
-	public function storefront_edit_settings_field_callback(): void {
+	public function storefront_cart_settings_field_callback(): void {
 		?>
 		<fieldset>
-			<legend class="screen-reader-text"><span>When a customer interacts with a product</span></legend>
+			<legend class="screen-reader-text"><span>During cart interaction</span></legend>
 			<label for="wc_bsale_storefront_stock_cart">
 				<input type="checkbox" id="wc_bsale_storefront_stock_cart" name="wc_bsale_storefront_stock[cart]" value="1" <?php checked( 1, $this->storefront_settings['cart'] ?? false ); ?> />
 				Update the stock with Bsale when a customer adds a product to its cart
 			</label>
 			<p class="description">When a customer adds a product to its cart, the stock of that product will be updated with Bsale.</p>
 		</fieldset>
-		<br>
+		<?php
+	}
+
+	public function storefront_checkout_settings_field_callback(): void {
+		?>
 		<fieldset>
-			<legend class="screen-reader-text"><span>When a customer interacts with a product</span></legend>
+			<legend class="screen-reader-text"><span>During checkout interaction</span></legend>
 			<label for="wc_bsale_storefront_stock_checkout">
 				<input type="checkbox" id="wc_bsale_storefront_stock_checkout" name="wc_bsale_storefront_stock[checkout]" value="1" <?php checked( 1, $this->storefront_settings['checkout'] ?? false ); ?> />
 				Update the stock of the products in the cart at the start of the checkout process
 			</label>
-			<p class="description">When a customer starts the checkout process, the stock of the products in the cart will be updated with Bsale.</p>
+			<p class="description">When a customer starts the checkout process, the stock of the products in the cart will be updated with Bsale. If, during this process, the stock of a product is set
+				to zero or below because of the data in Bsale, the customer won't be notified immediately. However, WooCommerce will notify the customer of the stock issue when they try to place the order.</p>
 		</fieldset>
 		<?php
 	}
