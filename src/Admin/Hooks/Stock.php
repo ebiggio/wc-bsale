@@ -2,7 +2,7 @@
 /**
  * Hooks for the admin side of the plugin related to stock syncing.
  *
- * @class   Stock_Hooks
+ * @class   Stock
  * @package WC_Bsale
  */
 

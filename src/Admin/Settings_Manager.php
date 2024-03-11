@@ -2,7 +2,7 @@
 /**
  * Settings manager for the plugin.
  *
- * @class   WC_Bsale_Admin_Settings
+ * @class   Settings_Manager
  * @package WC_Bsale
  */
 
