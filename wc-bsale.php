@@ -43,12 +43,17 @@ if ( ! in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins',
 	return;
 }
 
-// Check if this plugin is active
-if ( in_array( 'wc-bsale/wc-bsale.php', apply_filters( 'active_plugins', get_option( 'active_plugins' ) ) ) ) {
-	// And away we go
-	if ( is_admin() ) {
-		require_once plugin_dir_path( __FILE__ ) . 'includes/admin/class-wc-bsale-admin.php';
-	} else {
-		require_once plugin_dir_path( __FILE__ ) . 'includes/storefront/class-wc-bsale-storefront-hooks.php';
-	}
+// Install class
+register_activation_hook( __FILE__, function () {
+	require_once plugin_dir_path( __FILE__ ) . '/src/Installer.php';
+} );
+
+// Autoloader
+require_once plugin_dir_path( __FILE__ ) . '/src/Autoload.php';
+
+// And away we go
+if ( is_admin() ) {
+	new Admin_Init();
+} else {
+	new Storefront_Init();
 }
