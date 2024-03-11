@@ -12,15 +12,23 @@ Text Domain: wc-bsale
 
 namespace WC_Bsale;
 
+use WC_Bsale\Admin\Admin_Init;
+use WC_Bsale\Storefront\Storefront_Init;
+
 // Prevent direct access to this file
 defined( 'ABSPATH' ) || exit;
 
-const WC_BSALE_PLUGIN_VERSION = '0.1.0';
-const WC_BSALE_PLUGIN_DIR = __DIR__;
-define( "WC_Bsale\WC_BSALE_PLUGIN_URL", plugin_dir_url( __FILE__ ) );
+// Check if this plugin is active
+if ( ! in_array( 'wc-bsale/wc-bsale.php', apply_filters( 'active_plugins', get_option( 'active_plugins' ) ) ) ) {
+	return;
+}
 
-// Load the plugin text domain
-load_plugin_textdomain( 'wc_bsale', false, dirname( plugin_basename( __FILE__ ) ) . '/languages' );
+const PLUGIN_VERSION = '0.1.0';
+const PLUGIN_DIR     = __DIR__;
+define( "WC_Bsale\PLUGIN_URL", plugin_dir_url( __FILE__ ) );
+
+// Load the plugin text domain TODO: Add translations
+// load_plugin_textdomain( 'wc_bsale', false, dirname( plugin_basename( __FILE__ ) ) . '/languages' );
 
 // Check if WooCommerce is active
 if ( ! in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', get_option( 'active_plugins' ) ) ) ) {

@@ -2,7 +2,7 @@
 /**
  * Manages the communication with the Bsale API.
  *
- * @class   WC_Bsale_API
+ * @class   Bsale_API_Client
  * @package WC_Bsale
  */
 
@@ -11,9 +11,9 @@ namespace WC_Bsale;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * WC_Bsale_API class
+ * Bsale_API_Client class
  */
-class WC_Bsale_API {
+class Bsale_API_Client {
 	private string $api_url;
 	private string $access_token;
 	private array|null $bsale_response = null;
@@ -27,11 +27,12 @@ class WC_Bsale_API {
 	/**
 	 * Makes an HTTP GET request to the Bsale API.
 	 *
-	 * @param string $endpoint The endpoint to request
+	 * @param string $endpoint The endpoint to request.
 	 *
-	 * @return false|mixed The response from the API, or false if there was an error making the request
+	 * @return mixed The response from the API.
+	 * @throws \Exception If there was an error making the request.
 	 */
-	private function make_api_request( string $endpoint ): mixed {
+	private function make_request( string $endpoint ): mixed {
 		// TODO Check if the access token is set and log an error if it's not
 		$this->bsale_response = null;
 		$this->bsale_wp_error = null;
@@ -46,8 +47,7 @@ class WC_Bsale_API {
 
 		if ( is_wp_error( $bsale_response ) ) {
 			$this->bsale_wp_error = $bsale_response;
-
-			return false;
+			throw new \Exception( 'Error making the request to the Bsale API: ' . $bsale_response->get_error_message() );
 		}
 
 		$this->bsale_response = $bsale_response;
@@ -68,7 +68,8 @@ class WC_Bsale_API {
 	 *
 	 * @param $code string The product's code. We assume that, in WooCommerce, the code is the product's SKU.
 	 *
-	 * @return int|bool The product's stock, or false if an empty code was provided or if no stock was found in Bsale
+	 * @return int|bool The product's stock, or false if an empty code was provided or if no stock was found in Bsale.
+	 * @throws \Exception If there was an error fetching the stock from Bsale.
 	 */
 	public function get_stock_by_code( string $code ): bool|int {
 		if ( '' === $code ) {
@@ -77,13 +78,7 @@ class WC_Bsale_API {
 
 		$api_endpoint = 'stocks.json?code=' . $code;
 
-		$stock_list = $this->make_api_request( $api_endpoint );
-
-		if ( ! $stock_list ) {
-			// There was an error making the request
-			// TODO Log the error
-			return false;
-		}
+		$stock_list = $this->make_request( $api_endpoint );
 
 		if ( 0 === $stock_list->count ) {
 			// No stock found for the code provided (doesn't mean that the product doesn't exist in Bsale; just that it has no stock)
@@ -93,6 +88,6 @@ class WC_Bsale_API {
 		// Get only the first item of the collection
 		$stock = $stock_list->items[0];
 
-		return (int)$stock->quantityAvailable;
+		return (int) $stock->quantityAvailable;
 	}
 }

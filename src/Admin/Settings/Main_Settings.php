@@ -2,24 +2,28 @@
 /**
  * Main settings page.
  *
- * @class   WC_Bsale_Admin_Settings_Main
+ * @class   Main_Settings
  * @package WC_Bsale
  */
 
-namespace WC_Bsale;
+namespace WC_Bsale\Admin\Settings;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
- * WC_Bsale_Admin_Settings_Main class
+ * Main_Settings class
  */
-class WC_Bsale_Admin_Settings_Main {
+class Main_Settings {
+	public function __construct() {
+		$this->settings_page_content();
+	}
+
 	/**
-	 * Manages the main settings page.
+	 * Displays the main settings page.
 	 *
 	 * @return void
 	 */
-	public function main_settings_page_content(): void {
+	public function settings_page_content(): void {
 		add_settings_section(
 			'wc_bsale_main_section',
 			'Bsale API configuration',
@@ -47,6 +51,3 @@ class WC_Bsale_Admin_Settings_Main {
 		echo '<input type="text" name="wc_bsale_sandbox_access_token" value="' . esc_attr( get_option( 'wc_bsale_sandbox_access_token' ) ) . '" style="width: 100%;" />';
 	}
 }
-
-$wc_bsale_admin_settings_main = new WC_Bsale_Admin_Settings_Main();
-$wc_bsale_admin_settings_main->main_settings_page_content();

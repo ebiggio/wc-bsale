@@ -2,25 +2,27 @@
 /**
  * Stock settings page.
  *
- * @class   WC_Bsale_Admin_Settings_Stock
+ * @class   Stock_Settings
  * @package WC_Bsale
  */
 
 // TODO Sanitize and validate the input before saving it to the database
-namespace WC_Bsale;
+namespace WC_Bsale\Admin\Settings;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
- * WC_Bsale_Admin_Settings_Stock class
+ * Stock_Settings class
  */
-class WC_Bsale_Admin_Settings_Stock {
+class Stock_Settings {
 	private mixed $admin_settings;
 	private mixed $storefront_settings;
 
 	public function __construct() {
 		$this->admin_settings      = maybe_unserialize( get_option( 'wc_bsale_admin_stock' ) );
 		$this->storefront_settings = maybe_unserialize( get_option( 'wc_bsale_storefront_stock' ) );
+
+		$this->settings_page_content();
 	}
 
 	/**
@@ -28,7 +30,7 @@ class WC_Bsale_Admin_Settings_Stock {
 	 *
 	 * @return void
 	 */
-	public function stock_settings_page_content(): void {
+	public function settings_page_content(): void {
 		?>
 		<div class="wc-bsale-notice wc-bsale-notice-info">
 			<p><span class="dashicons dashicons-visibility"></span> For a product to be synchronized with Bsale, it must have a SKU and the "Manage stock" option enabled.</p>
@@ -148,6 +150,3 @@ class WC_Bsale_Admin_Settings_Stock {
 		<?php
 	}
 }
-
-$wc_bsale_admin_settings_stock = new WC_Bsale_Admin_Settings_Stock();
-$wc_bsale_admin_settings_stock->stock_settings_page_content();

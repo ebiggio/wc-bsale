@@ -2,18 +2,22 @@
 /**
  * Hooks for the admin side of the plugin related to stock syncing.
  *
- * @class   WC_Bsale_Admin_Hooks
+ * @class   Stock_Hooks
  * @package WC_Bsale
  */
 
-namespace WC_Bsale;
+namespace WC_Bsale\Admin\Hooks;
+
+use WC_Bsale\Bsale_API_Client;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
- * WC_Bsale_Admin_Hooks class
+ * Stock class
+ *
+ * This class doesn't implement the API_Consumer interface, since the results of the operations are shown directly to the user in the admin through notices.
  */
-class WC_Bsale_Admin_Hooks {
+class Stock {
 	private mixed $admin_stock_settings;
 
 	public function __construct() {
@@ -23,8 +27,6 @@ class WC_Bsale_Admin_Hooks {
 		if ( ! $this->admin_stock_settings ) {
 			return;
 		}
-
-		require_once WC_BSALE_PLUGIN_DIR . '/includes/bsale/class-wc-bsale-api.php';
 
 		add_action( 'load-post.php', array( $this, 'wc_bsale_product_edit_hook' ) );
 	}
@@ -53,6 +55,7 @@ class WC_Bsale_Admin_Hooks {
 	 * For a product or variation to be synced, it needs to have a SKU and be marked with the "Manage stock" option. It also needs to have stock in Bsale.
 	 *
 	 * @return void
+	 * @throws \Exception
 	 */
 	public function wc_bsale_product_edit_hook(): void {
 		$screen = get_current_screen();
@@ -96,15 +99,23 @@ class WC_Bsale_Admin_Hooks {
 				return;
 			}
 
-			$bsale_api = new WC_Bsale_API();
+			$bsale_api = new Bsale_API_Client();
 
 			// If the user has clicked the "Sync Stock" button or the settings to sync automatically is enabled, we update the stock of the variations with the stock in Bsale
 			if ( isset( $_POST['wc_bsale_sync_stock'] ) || isset( $this->admin_stock_settings['auto_update'] ) ) {
 				$variations_synced = array();
 
 				foreach ( $variations_to_sync as $variation_id => $variation ) {
-					$sku         = $variation->get_sku();
-					$bsale_stock = $bsale_api->get_stock_by_code( $sku );
+					$sku = $variation->get_sku();
+
+					try {
+						$bsale_stock = $bsale_api->get_stock_by_code( $sku );
+					} catch ( \Exception $e ) {
+						$message = sprintf( esc_html__( 'An error occurred while trying to fetch the stock of the variation "%s" from Bsale. Please try again later.', 'wc-bsale' ), $variation->get_sku() );
+						$this->show_admin_notice( $message, 'error' );
+
+						continue;
+					}
 
 					if ( false !== $bsale_stock ) {
 						wc_update_product_stock( $variation, $bsale_stock );
@@ -121,34 +132,44 @@ class WC_Bsale_Admin_Hooks {
 					continue;
 				}
 
-				$sku         = $variation->get_sku();
-				$bsale_stock = $bsale_api->get_stock_by_code( $sku );
+				$sku = $variation->get_sku();
+
+				try {
+					$bsale_stock = $bsale_api->get_stock_by_code( $sku );
+				} catch ( \Exception $e ) {
+					$message = sprintf( esc_html__( 'An error occurred while trying to fetch the stock of the variation "%s" from Bsale. Please try again later.', 'wc-bsale' ), $variation->get_sku() );
+					$this->show_admin_notice( $message, 'error' );
+
+					continue;
+				}
 
 				// If the variation has no stock in Bsale, we show a message to the user notifying them of this
 				if ( false === $bsale_stock ) {
 					$message = sprintf( esc_html__( 'No stock was found in Bsale for the code [%s]. Please check if this variation\'s SKU exists in Bsale.', 'wc-bsale' ), $sku );
 					$this->show_admin_notice( $message, 'warning' );
-				} else {
-					// If the variation has stock in Bsale, we compare it with the stock in WooCommerce
-					$wc_stock = (int) get_post_meta( $variation->get_id(), '_stock', true );
 
-					if ( $wc_stock === $bsale_stock ) {
-						$message = sprintf( esc_html__( 'The stock of the variation "%s" is the same as the stock in Bsale.', 'wc-bsale' ), $variation->get_sku() );
-						$this->show_admin_notice( $message, 'success' );
-					} else {
-						add_action( 'admin_notices', function () use ( $wc_stock, $bsale_stock, $variation ) {
-							$message = sprintf( esc_html__( 'The stock of the variation "%s" [%s] is different than the stock in Bsale [%s]. Would you like to sync them?', 'wc-bsale' ), $variation->get_sku(), $wc_stock, $bsale_stock );
-							?>
-							<div class="notice notice-warning is-dismissible">
-								<p><?php echo $message; ?></p>
-								<form action="" method="POST">
-									<input type="hidden" name="wc_bsale_sync_stock" value="1"/>
-									<?php submit_button( esc_html__( 'Update stock with Bsale' ) ); ?>
-								</form>
-							</div>
-							<?php
-						} );
-					}
+					continue;
+				}
+
+				// If the variation has stock in Bsale, we compare it with the stock in WooCommerce
+				$wc_stock = (int) get_post_meta( $variation->get_id(), '_stock', true );
+
+				if ( $wc_stock === $bsale_stock ) {
+					$message = sprintf( esc_html__( 'The stock of the variation "%s" is the same as the stock in Bsale.', 'wc-bsale' ), $variation->get_sku() );
+					$this->show_admin_notice( $message, 'success' );
+				} else {
+					add_action( 'admin_notices', function () use ( $wc_stock, $bsale_stock, $variation ) {
+						$message = sprintf( esc_html__( 'The stock of the variation "%s" [%s] is different than the stock in Bsale [%s]. Would you like to sync them?', 'wc-bsale' ), $variation->get_sku(), $wc_stock, $bsale_stock );
+						?>
+						<div class="notice notice-warning is-dismissible">
+							<p><?php echo $message; ?></p>
+							<form action="" method="POST">
+								<input type="hidden" name="wc_bsale_sync_stock" value="1"/>
+								<?php submit_button( esc_html__( 'Update stock with Bsale' ) ); ?>
+							</form>
+						</div>
+						<?php
+					} );
 				}
 			}
 
@@ -179,12 +200,19 @@ class WC_Bsale_Admin_Hooks {
 			return;
 		}
 
-		$wc_stock    = (int) get_post_meta( $product->get_id(), '_stock', true );
-		$bsale_api   = new WC_Bsale_API();
-		$bsale_stock = $bsale_api->get_stock_by_code( $sku );
+		$wc_stock  = (int) get_post_meta( $product->get_id(), '_stock', true );
+		$bsale_api = new Bsale_API_Client();
+
+		try {
+			$bsale_stock = $bsale_api->get_stock_by_code( $sku );
+		} catch ( \Exception $e ) {
+			$message = sprintf( esc_html__( 'An error occurred while trying to fetch the stock of the product "%s" from Bsale. Please try again later.', 'wc-bsale' ), $sku );
+			$this->show_admin_notice( $message, 'error' );
+
+			return;
+		}
 
 		// If the product has no stock in Bsale, we show a message to the user notifying them of this
-		// TODO $bsale_stock can be false because of an error in the API request. We should handle this case (perhaps by returning a WP_Error object from the API class and checking for it here)
 		if ( false === $bsale_stock ) {
 			$message = sprintf( esc_html__( 'No stock was found in Bsale for the code [%s]. Please check if this product\'s SKU exists in Bsale.', 'wc-bsale' ), $sku );
 			$this->show_admin_notice( $message, 'warning' );
@@ -223,5 +251,3 @@ class WC_Bsale_Admin_Hooks {
 		} );
 	}
 }
-
-new WC_Bsale_Admin_Hooks();

@@ -6,16 +6,28 @@
  * @package WC_Bsale
  */
 
-namespace WC_Bsale;
+namespace WC_Bsale\Admin;
+
+use const WC_Bsale\PLUGIN_URL;
+use const WC_Bsale\PLUGIN_VERSION;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
- * WC_Bsale_Admin_Settings class
+ * Settings_Manager class
  */
-class WC_Bsale_Admin_Settings {
+class Settings_Manager {
 	public function __construct() {
 		add_action( 'admin_init', array( $this, 'init_settings' ) );
+
+		// Load the admin styles only if we are in a settings page of the plugin
+		add_action( 'admin_enqueue_scripts', function ( $hook ) {
+			if ( 'toplevel_page_wc-bsale-settings' !== $hook ) {
+				return;
+			}
+
+			wp_enqueue_style( 'wc-bsale-admin', PLUGIN_URL . 'assets/css/wc-bsale.css', array(), PLUGIN_VERSION );
+		} );
 	}
 
 	/**
@@ -54,17 +66,17 @@ class WC_Bsale_Admin_Settings {
 		);
 
 		// Include the view that contains the tabs for all the settings
-		include plugin_dir_path( __FILE__ ) . 'settings/views/html-admin-settings.php';
+		include plugin_dir_path( __FILE__ ) . 'Settings/Views/Header.php';
 
 		// Include classes according to the selected tab
 		$tab = $_GET['tab'] ?? '';
 
 		switch ( $tab ) {
 			case 'stock':
-				require_once plugin_dir_path( __FILE__ ) . 'settings/class-wc-bsale-settings-stock.php';
+				new Settings\Stock_Settings();
 				break;
 			default:
-				require_once plugin_dir_path( __FILE__ ) . 'settings/class-wc-bsale-settings-main.php';
+				new Settings\Main_Settings();
 				break;
 		}
 
