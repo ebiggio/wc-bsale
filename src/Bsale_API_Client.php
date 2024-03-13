@@ -99,4 +99,65 @@ class Bsale_API_Client {
 
 		return (int) $stock->quantityAvailable;
 	}
+
+	/**
+	 * Searches for **active** offices in Bsale by their names and returns their IDs and names.
+	 *
+	 * @param string $name The name of the office to search for.
+	 *
+	 * @return array The list of offices that matches the name provided. Will be empty if no offices were found or if an empty name was provided.
+	 * @throws \Exception If there was an error fetching the list of offices from Bsale.
+	 */
+	public function search_offices_by_name( string $name ): array {
+		$offices = array();
+
+		if ( '' === $name ) {
+			return $offices;
+		}
+
+		$name = urlencode( $name );
+
+		$offices_list = $this->make_request( 'offices.json?state=1&fields=[name]&name=' . $name );
+
+		foreach ( $offices_list->items as $office ) {
+			$offices[] = array(
+				'id'   => $office->id,
+				'name' => $office->name
+			);
+		}
+
+		return $offices;
+	}
+
+	/**
+	 * Gets an **active** office from Bsale by its ID.
+	 *
+	 * @param int $office_id The ID of the office to get.
+	 *
+	 * @return array The office's data. Will be empty if the office was not found, if an empty ID was provided, or if the office is not active.
+	 * @throws \Exception If there was an error fetching the office from Bsale.
+	 */
+	public function get_office_by_id( int $office_id ): array {
+		if ( 0 === $office_id ) {
+			return array();
+		}
+
+		try {
+			$office = $this->make_request( 'offices/' . $office_id . '.json' );
+		} catch ( \Exception $e ) {
+			// If the error code is 404, it means that the office was not found. That's a valid case, so we return an empty array. In any other situation, we throw the exception
+			if ( 404 !== $this->bsale_wp_error->get_error_code() ) {
+				throw $e;
+			}
+
+			return array();
+		}
+
+		// Check the office's state. If it's not active, we return an empty array
+		if ( 1 !== $office->state ) {
+			return array();
+		}
+
+		return (array) $office;
+	}
 }
