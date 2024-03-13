@@ -9,6 +9,10 @@
 // TODO Sanitize and validate the input before saving it to the database
 namespace WC_Bsale\Admin\Settings;
 
+use WC_Bsale\Bsale_API_Client;
+
+use const WC_Bsale\PLUGIN_URL;
+
 defined( 'ABSPATH' ) || exit;
 
 /**
@@ -17,12 +21,84 @@ defined( 'ABSPATH' ) || exit;
 class Stock_Settings {
 	private mixed $admin_settings;
 	private mixed $storefront_settings;
+	private mixed $selected_office = null;
 
 	public function __construct() {
 		$this->admin_settings      = maybe_unserialize( get_option( 'wc_bsale_admin_stock' ) );
 		$this->storefront_settings = maybe_unserialize( get_option( 'wc_bsale_storefront_stock' ) );
 
+		// Check if an office ID is stored in the configuration. If it is, get its name from Bsale to set it as the selected option in the select element
+		$office_id = (int) ($this->storefront_settings['order_officeid'] ?? null);
+
+		if ( $office_id ) {
+			$bsale_api_client = new Bsale_API_Client();
+
+			try {
+				$office = $bsale_api_client->get_office_by_id( $office_id );
+			} catch ( \Exception $e ) {
+				$office = null;
+			}
+
+			$this->selected_office = $office ? array( 'id' => $office['id'], 'text' => $office['name'] ) : null;
+		}
+
+		// Enqueue the Select2 plugin
+		wp_enqueue_style( 'wc-bsale-admin-stock', 'https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css' );
+		wp_enqueue_script( 'wc-bsale-admin-stock-select2', 'https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js' );
+
+		// Enqueue the JavaScript file for the office selection and localize the script with the URL for the AJAX request
+		wp_enqueue_script( 'wc-bsale-admin-stock', PLUGIN_URL . 'assets/js/wc-bsale-admin-stock.js', array( 'jquery' ), null, true );
+		wp_localize_script( 'wc-bsale-admin-stock', 'bsale_offices', array(
+			'offices_ajax_url'    => admin_url( 'admin-ajax.php' ),
+			'select2_placeholder' => 'Search for an office...',
+		) );
+
 		$this->settings_page_content();
+	}
+
+	/**
+	 * Search offices by name on Bsale and send them as a JSON response formatted for the Select2 plugin.
+	 *
+	 * This method is expected to be called via an AJAX request, with the 'term' parameter set to the search term.
+	 * If there is an error getting the offices from Bsale, an error message will be sent as a disabled option for the Select2 plugin.
+	 *
+	 * @return void
+	 */
+	public static function search_bsale_offices(): void {
+		$term = sanitize_text_field($_GET['term']);
+
+		$bsale_offices = array();
+
+		$bsale_api_client = new Bsale_API_Client();
+
+		try {
+			$bsale_offices = $bsale_api_client->search_offices_by_name( $term );
+		} catch ( \Exception $e ) {
+			// Send an error message as a disabled option for the Select2 plugin
+			wp_send_json( array(
+				'results' => array(
+					array(
+						'id'       => '-1',
+						'text'     => 'There was an error getting the offices from Bsale: ' . $e->getMessage(),
+						'disabled' => true,
+					),
+				),
+			) );
+
+			wp_die();
+		}
+
+		// Transform the array of offices into an array of objects with the required format for the Select2 plugin
+		$bsale_offices = array_map( function ( $office ) {
+			return array(
+				'id'   => $office['id'],
+				'text' => $office['name'],
+			);
+		}, $bsale_offices );
+
+		wp_send_json(array('results' => $bsale_offices));
+
+		wp_die();
 	}
 
 	/**
@@ -70,6 +146,14 @@ class Stock_Settings {
 			'wc_bsale_storefront_stock_checkout',
 			'During checkout interaction',
 			array( $this, 'storefront_checkout_settings_field_callback' ),
+			'wc-bsale-settings-stock',
+			'wc_bsale_stock_section'
+		);
+
+		add_settings_field(
+			'wc_bsale_storefront_order',
+			'After an order is placed',
+			array( $this, 'storefront_order_settings_field_callback' ),
 			'wc-bsale-settings-stock',
 			'wc_bsale_stock_section'
 		);
@@ -147,6 +231,29 @@ class Stock_Settings {
 			<p class="description">When a customer starts the checkout process, the stock of the products in the cart will be updated with Bsale. If, during this process, the stock of a product is set
 				to zero or below because of the data in Bsale, the customer won't be notified immediately. However, WooCommerce will notify the customer of the stock issue when they try to place the order.</p>
 		</fieldset>
+		<?php
+	}
+
+	public function storefront_order_settings_field_callback(): void {
+		?>
+		<fieldset>
+			<legend class="screen-reader-text"><span>After an order is placed</span></legend>
+			<label for="wc_bsale_storefront_order" style="display: inline">
+				Deduct (consume) the stock of the products in the order on Bsale on this office:
+				<select id="wc_bsale_storefront_order_officeid" name="wc_bsale_storefront_stock[order_officeid]" style="width: 25%">
+					<?php
+					if ( $this->selected_office ) {
+						echo '<option value="' . $this->selected_office['id'] . '" selected>' . $this->selected_office['text'] . '</option>';
+					}
+					?>
+				</select>
+			</label>
+			<p class="description">After an order is placed, the stock of the products in the order will be deducted (consumed) on Bsale on the selected office. If no office is selected, no stock will be deducted.</p>
+			<div class="wc-bsale-notice wc-bsale-notice-info">
+				<p><span class="dashicons dashicons-visibility"></span> If you don't see the office you are looking for, please make sure that the office is active in Bsale and its name is not empty.</p>
+			</div>
+		</fieldset>
+		<br>
 		<?php
 	}
 }
