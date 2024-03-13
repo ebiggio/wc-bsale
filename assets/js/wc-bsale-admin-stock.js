@@ -1,3 +1,10 @@
+function updateAutoCheckboxStatus() {
+    document.getElementById('wc_bsale_admin_stock_auto_update').disabled = !document.getElementById('wc_bsale_admin_stock_edit').checked;
+}
+
+document.getElementById('wc_bsale_admin_stock_edit').addEventListener('change', updateAutoCheckboxStatus);
+document.addEventListener('DOMContentLoaded', updateAutoCheckboxStatus);
+
 jQuery(document).ready(function ($) {
     $('#wc_bsale_storefront_order_officeid').select2({
         placeholder: bsale_offices.select2_placeholder,

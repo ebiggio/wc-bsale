@@ -190,16 +190,8 @@ class Stock_Settings {
 					Don't ask for confirmation when the stock doesn't match and update the stock automatically in WooCommerce
 				</label>
 				<p class="description">If this option is checked, the stock of the product will automatically be updated in WooCommerce if the stock of the product doesn't match the stock in Bsale.</p>
-			</fieldset>
-		</div>
-		<script>
-            function updateAutoCheckboxStatus() {
-                document.getElementById('wc_bsale_admin_stock_auto_update').disabled = !document.getElementById('wc_bsale_admin_stock_edit').checked;
-            }
-
-            document.getElementById('wc_bsale_admin_stock_edit').addEventListener('change', updateAutoCheckboxStatus);
-            document.addEventListener('DOMContentLoaded', updateAutoCheckboxStatus);
-		</script>
+			</div>
+		</fieldset>
 		<?php
 	}
 
