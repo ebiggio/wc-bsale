@@ -24,11 +24,11 @@ The WooCommerce Bsale Integration Plugin is designed to improve the WooCommerce 
 1. Download the plugin files.
 2. Upload the plugin files to the `/wp-content/plugins/` directory of your WordPress site, or install the plugin through the WordPress plugins screen directly.
 3. Activate the plugin through the 'Plugins' screen in WordPress.
-4. Navigate to the "WooCommerce Bsale" settings page to configure the plugin according to your needs.
+4. Navigate to the "WooCommerce Bsale" settings page to configure the plugin.
 
 ## Configuration
 
-After installation, set the sandbox API key in the main settings page. After that, you can set up the stock synchronization settings in the stock settings page to enable the different triggers for stock updates. As more features are added, additional settings pages will be included to configure the plugin.
+After installation, set the sandbox API key in the main settings page. Once your API key is set, you can enable different triggers for stock updates in the stock settings page. As more features are added, additional settings and settings pages will be included to configure the plugin.
 
 ## Support
 
