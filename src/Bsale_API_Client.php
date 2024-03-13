@@ -33,7 +33,11 @@ class Bsale_API_Client {
 	 * @throws \Exception If there was an error making the request.
 	 */
 	private function make_request( string $endpoint ): mixed {
-		// TODO Check if the access token is set and log an error if it's not
+		// Check if the access token is set and throw an exception if it's not
+		if ( '' === $this->access_token ) {
+			throw new \Exception( 'The Bsale API access token is not set.' );
+		}
+
 		$this->bsale_response = null;
 		$this->bsale_wp_error = null;
 
@@ -45,9 +49,14 @@ class Bsale_API_Client {
 
 		$bsale_response = wp_remote_get( $this->api_url . $endpoint, $args );
 
-		if ( is_wp_error( $bsale_response ) ) {
-			$this->bsale_wp_error = $bsale_response;
-			throw new \Exception( 'Error making the request to the Bsale API: ' . $bsale_response->get_error_message() );
+		if ( is_wp_error( $bsale_response ) || 200 !== wp_remote_retrieve_response_code( $bsale_response ) ) {
+			if ( is_wp_error( $bsale_response ) ) {
+				$this->bsale_wp_error = $bsale_response;
+			} else {
+				$this->bsale_wp_error = new \WP_Error( wp_remote_retrieve_response_code( $bsale_response ), wp_remote_retrieve_response_message( $bsale_response ) );
+			}
+
+			throw new \Exception( 'Error making the request to the Bsale API: ' . $this->bsale_wp_error->get_error_message() );
 		}
 
 		$this->bsale_response = $bsale_response;
