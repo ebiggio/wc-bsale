@@ -28,3 +28,15 @@
     background-color: #cce5ff;
     border-color: #007bff;
 }
+
+.wc-bsale-related-fieldset {
+    border: 1px solid #007cba;
+    padding: 1rem;
+    border-radius: 5px;
+    background-color: #f6f7f7;
+}
+
+.wc-bsale-related-fieldset legend {
+    font-weight: bold;
+    color: #007cba;
+}

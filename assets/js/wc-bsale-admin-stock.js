@@ -23,4 +23,6 @@ jQuery(document).ready(function ($) {
             cache: true
         }
     })
+
+    $('#wc_bsale_storefront_order_status').select2({});
 });

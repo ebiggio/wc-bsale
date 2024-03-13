@@ -22,6 +22,7 @@ class Stock_Settings {
 	private mixed $admin_settings;
 	private mixed $storefront_settings;
 	private mixed $selected_office = null;
+	private mixed $order_statuses;
 
 	public function __construct() {
 		$this->admin_settings      = maybe_unserialize( get_option( 'wc_bsale_admin_stock' ) );
@@ -41,6 +42,9 @@ class Stock_Settings {
 
 			$this->selected_office = $office ? array( 'id' => $office['id'], 'text' => $office['name'] ) : null;
 		}
+
+		// Get the complete list of order statuses
+		$this->order_statuses = wc_get_order_statuses();
 
 		// Enqueue the Select2 plugin
 		wp_enqueue_style( 'wc-bsale-admin-stock', 'https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css' );
@@ -109,7 +113,7 @@ class Stock_Settings {
 	public function settings_page_content(): void {
 		?>
 		<div class="wc-bsale-notice wc-bsale-notice-info">
-			<p><span class="dashicons dashicons-visibility"></span> For a product to be synchronized with Bsale, it must have a SKU and the "Manage stock" option enabled.</p>
+			<p><span class="dashicons dashicons-visibility"></span> For a product to be synchronized with Bsale, it must have a SKU and the "Manage stock" option enabled. This plugin assumes that the SKU of a product or a variation in WooCommerce is the <code>code</code> field in Bsale.</p>
 		</div>
 		<?php
 		add_settings_section(
@@ -173,7 +177,7 @@ class Stock_Settings {
 
 	public function admin_edit_settings_field_callback(): void {
 		?>
-		<fieldset>
+		<fieldset class="wc-bsale-related-fieldset">
 			<legend class="screen-reader-text"><span>When editing a product</span></legend>
 			<label for="wc_bsale_admin_stock_edit">
 				<input type="checkbox" id="wc_bsale_admin_stock_edit" name="wc_bsale_admin_stock[edit]" value="1" <?php checked( 1, $this->admin_settings['edit'] ?? false ); ?> />
@@ -181,10 +185,8 @@ class Stock_Settings {
 			</label>
 			<p class="description">When editing a product, the stock will be checked with Bsale. If the stock doesn't match, a confirmation message will be displayed to the user asking if they want
 				to update the stock in WooCommerce with the stock in Bsale.</p>
-		</fieldset>
-		<br>
-		<div style="margin-left: 20px">
-			<fieldset>
+			<br>
+			<div style="margin-left: 20px">
 				<label for="wc_bsale_admin_stock_auto_update">
 					<input type="checkbox" id="wc_bsale_admin_stock_auto_update" name="wc_bsale_admin_stock[auto_update]" value="1" <?php checked( 1, $this->admin_settings['auto_update'] ?? false ); ?> />
 					Don't ask for confirmation when the stock doesn't match and update the stock automatically in WooCommerce
@@ -246,6 +248,34 @@ class Stock_Settings {
 			</div>
 		</fieldset>
 		<br>
+		<fieldset class="wc-bsale-related-fieldset">
+			<legend>When should the stock be deducted (consumed) in Bsale?</legend>
+			<label>
+				<input type="radio" name="wc_bsale_storefront_stock[order_event]" value="wc" <?php checked( 'wc', $this->storefront_settings['order_event'] ?? 'wc' ); ?> />
+				When WooCommerce reduces the stock
+			</label>
+			<p class="description">The stock of the products in the order will be deducted on Bsale when WooCommerce reduces the stock. This usually happens when the order status changes to "Processing" or "Completed".</p>
+			<br>
+			<label>
+				<input type="radio" name="wc_bsale_storefront_stock[order_event]" value="custom" <?php checked( 'custom', $this->storefront_settings['order_event'] ?? 'wc' ); ?> />
+				When the order status changes to:
+			</label>
+			<select id="wc_bsale_storefront_order_status" name="wc_bsale_storefront_stock[order_status][]" multiple="multiple">
+				<?php
+				$selected_statuses = $this->storefront_settings['order_status'] ?? array( 'wc-processing' );
+				foreach ( $this->order_statuses as $status => $label ) {
+					echo '<option value="' . $status . '" ' . selected( true === in_array($status, $selected_statuses) ) . '>' . $label . '</option>';
+				}
+				?>
+			</select>
+			<p class="description">When the order status changes to one of the selected statuses, the stock of the products in the order will be deducted (consumed) on Bsale.</p>
+		</fieldset>
+		<div class="wc-bsale-notice wc-bsale-notice-success">
+			<p>
+				<span class="dashicons dashicons-yes"></span> In any of the cases, the stock of the products in the order will be deducted on Bsale only once, even if multiple events that reduce the stock are triggered in WooCommerce (e.g. when the order status changes to "Processing" and then to "Completed").
+				The plugin will keep track of the items in the order that has already been deducted on Bsale, preventing the stock from being deducted multiple times.
+			</p>
+		</div>
 		<?php
 	}
 }
