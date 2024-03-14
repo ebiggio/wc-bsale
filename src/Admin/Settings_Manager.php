@@ -39,6 +39,7 @@ class Settings_Manager {
 		register_setting( 'wc_bsale_main_settings_group', 'wc_bsale_sandbox_access_token' );
 		register_setting( 'wc_bsale_stock_settings_group', 'wc_bsale_admin_stock' );
 		register_setting( 'wc_bsale_stock_settings_group', 'wc_bsale_storefront_stock' );
+		register_setting( 'wc_bsale_stock_settings_group', 'wc_bsale_transversal_stock' );
 	}
 
 	/**

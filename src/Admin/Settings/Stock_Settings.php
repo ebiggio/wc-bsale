@@ -21,15 +21,17 @@ defined( 'ABSPATH' ) || exit;
 class Stock_Settings {
 	private mixed $admin_settings;
 	private mixed $storefront_settings;
+	private mixed $transversal_settings;
 	private mixed $selected_office = null;
 	private mixed $order_statuses;
 
 	public function __construct() {
-		$this->admin_settings      = maybe_unserialize( get_option( 'wc_bsale_admin_stock' ) );
-		$this->storefront_settings = maybe_unserialize( get_option( 'wc_bsale_storefront_stock' ) );
+		$this->admin_settings       = maybe_unserialize( get_option( 'wc_bsale_admin_stock' ) );
+		$this->storefront_settings  = maybe_unserialize( get_option( 'wc_bsale_storefront_stock' ) );
+		$this->transversal_settings = maybe_unserialize( get_option( 'wc_bsale_transversal_stock' ) );
 
 		// Check if an office ID is stored in the configuration. If it is, get its name from Bsale to set it as the selected option in the select element
-		$office_id = (int) ($this->storefront_settings['order_officeid'] ?? null);
+		$office_id = (int) ($this->transversal_settings['order_officeid'] ?? null);
 
 		if ( $office_id ) {
 			$bsale_api_client = new Bsale_API_Client();
@@ -155,9 +157,9 @@ class Stock_Settings {
 		);
 
 		add_settings_field(
-			'wc_bsale_storefront_order',
+			'wc_bsale_transversal_stock_order',
 			'After an order is placed',
-			array( $this, 'storefront_order_settings_field_callback' ),
+			array( $this, 'transversal_order_settings_field_callback' ),
 			'wc-bsale-settings-stock',
 			'wc_bsale_stock_section'
 		);
@@ -228,13 +230,13 @@ class Stock_Settings {
 		<?php
 	}
 
-	public function storefront_order_settings_field_callback(): void {
+	public function transversal_order_settings_field_callback(): void {
 		?>
 		<fieldset>
 			<legend class="screen-reader-text"><span>After an order is placed</span></legend>
-			<label for="wc_bsale_storefront_order" style="display: inline">
+			<label for="wc_bsale_transversal_order_officeid" style="display: inline">
 				Deduct (consume) the stock of the products in the order on Bsale on this office:
-				<select id="wc_bsale_storefront_order_officeid" name="wc_bsale_storefront_stock[order_officeid]" style="width: 25%">
+				<select id="wc_bsale_transversal_order_officeid" name="wc_bsale_transversal_stock[order_officeid]" style="width: 25%">
 					<?php
 					if ( $this->selected_office ) {
 						echo '<option value="' . $this->selected_office['id'] . '" selected>' . $this->selected_office['text'] . '</option>';
@@ -251,24 +253,24 @@ class Stock_Settings {
 		<fieldset class="wc-bsale-related-fieldset">
 			<legend>When should the stock be deducted (consumed) in Bsale?</legend>
 			<label>
-				<input type="radio" name="wc_bsale_storefront_stock[order_event]" value="wc" <?php checked( 'wc', $this->storefront_settings['order_event'] ?? 'wc' ); ?> />
+				<input type="radio" name="wc_bsale_transversal_stock[order_event]" value="wc" <?php checked( 'wc', $this->transversal_settings['order_event'] ?? 'wc' ); ?> />
 				When WooCommerce reduces the stock
 			</label>
 			<p class="description">The stock of the products in the order will be deducted on Bsale when WooCommerce reduces the stock. This usually happens when the order status changes to "Processing" or "Completed".</p>
 			<br>
 			<label>
-				<input type="radio" name="wc_bsale_storefront_stock[order_event]" value="custom" <?php checked( 'custom', $this->storefront_settings['order_event'] ?? 'wc' ); ?> />
+				<input type="radio" name="wc_bsale_transversal_stock[order_event]" value="custom" <?php checked( 'custom', $this->transversal_settings['order_event'] ?? 'wc' ); ?> />
 				When the order status changes to:
 			</label>
-			<select id="wc_bsale_storefront_order_status" name="wc_bsale_storefront_stock[order_status][]" multiple="multiple">
+			<select id="wc_bsale_transversal_order_status" name="wc_bsale_transversal_stock[order_status][]" multiple="multiple">
 				<?php
-				$selected_statuses = $this->storefront_settings['order_status'] ?? array( 'wc-processing' );
+				$selected_statuses = $this->transversal_settings['order_status'] ?? array( 'wc-processing' );
 				foreach ( $this->order_statuses as $status => $label ) {
 					echo '<option value="' . $status . '" ' . selected( true === in_array($status, $selected_statuses) ) . '>' . $label . '</option>';
 				}
 				?>
 			</select>
-			<p class="description">When the order status changes to one of the selected statuses, the stock of the products in the order will be deducted (consumed) on Bsale.</p>
+			<p class="description">When the order status changes to one of the selected statuses, the stock of the products in the order will be deducted on Bsale.</p>
 		</fieldset>
 		<div class="wc-bsale-notice wc-bsale-notice-success">
 			<p>
