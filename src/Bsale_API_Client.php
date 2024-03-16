@@ -189,4 +189,49 @@ class Bsale_API_Client {
 
 		return (array) $office;
 	}
+
+	/**
+	 * Consumes stock of products in Bsale.
+	 *
+	 * @param string $note      A description of the stock consumption. It will be displayed in Bsale's interface. Max length will be set to 100 characters.
+	 * @param int    $office_id The ID of the office to consume the stock from.
+	 * @param array  $products  An array of products to consume the stock from. Each product must have a 'code' and a 'quantity' key, and the 'quantity' must be greater than 0.
+	 *
+	 * @return bool True if the stock was consumed successfully. False if an empty note or office ID was provided, or if there was an error consuming the stock.
+	 */
+	public function consume_stock( string $note, int $office_id, array $products ): bool {
+		if ( 0 === $office_id ) {
+			return false;
+		}
+
+		$api_endpoint = 'stocks/consumptions.json';
+
+		$products_to_consume = array();
+
+		foreach ( $products as $product ) {
+			if ( '' === $product['code'] || 0 >= (int) $product['quantity'] ) {
+				// It's all or nothing. If one product is invalid, we don't perform the stock consumption
+				return false;
+			}
+
+			$products_to_consume[] = array(
+				'quantity' => $product['quantity'],
+				'code'     => $product['code']
+			);
+		}
+
+		$body = array(
+			'note'     => substr( $note, 0, 100 ),
+			'officeId' => $office_id,
+			'details'  => $products_to_consume
+		);
+
+		try {
+			$this->make_request( $api_endpoint, 'POST', $body );
+		} catch ( \Exception $e ) {
+			return false;
+		}
+
+		return true;
+	}
 }
