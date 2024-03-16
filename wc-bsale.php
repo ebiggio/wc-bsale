@@ -52,6 +52,10 @@ register_activation_hook( __FILE__, function () {
 require_once plugin_dir_path( __FILE__ ) . '/src/Autoload.php';
 
 // And away we go
+// --------------
+// Load the transversal hooks, which are hooks that can be fired both from the storefront or the admin side
+new Transversal_Hooks();
+
 if ( is_admin() ) {
 	new Admin_Init();
 } else {
