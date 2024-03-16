@@ -48,6 +48,11 @@ class Stock_Settings {
 		// Get the complete list of order statuses
 		$this->order_statuses = wc_get_order_statuses();
 
+		// Define the default note for the stock consumption operation if it's not configured
+		if ( ! isset( $this->transversal_settings['note'] ) ) {
+			$this->transversal_settings['note'] = '{1} - Order {2}';
+		}
+
 		// Enqueue the Select2 plugin
 		wp_enqueue_style( 'wc-bsale-admin-stock', 'https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css' );
 		wp_enqueue_script( 'wc-bsale-admin-stock-select2', 'https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js' );
@@ -115,7 +120,7 @@ class Stock_Settings {
 	public function settings_page_content(): void {
 		?>
 		<div class="wc-bsale-notice wc-bsale-notice-info">
-			<p><span class="dashicons dashicons-visibility"></span> For a product to be synchronized with Bsale, it must have a SKU and the "Manage stock" option enabled. This plugin assumes that the SKU of a product or a variation in WooCommerce is the <code>code</code> field in Bsale.</p>
+			<p><span class="dashicons dashicons-visibility"></span> For a product or variation to be synchronized with Bsale, it must have a SKU and the "Manage stock" option enabled. This plugin assumes that the SKU of a product or a variation in WooCommerce is the <code>code</code> field in Bsale.</p>
 		</div>
 		<?php
 		add_settings_section(
@@ -134,7 +139,7 @@ class Stock_Settings {
 		);
 
 		add_settings_section(
-			'wc_bsale_stock_section',
+			'wc_bsale_storefront_stock_section',
 			'Storefront integration',
 			array( $this, 'storefront_stock_settings_section_description' ),
 			'wc-bsale-settings-stock'
@@ -145,7 +150,7 @@ class Stock_Settings {
 			'During cart interaction',
 			array( $this, 'storefront_cart_settings_field_callback' ),
 			'wc-bsale-settings-stock',
-			'wc_bsale_stock_section'
+			'wc_bsale_storefront_stock_section'
 		);
 
 		add_settings_field(
@@ -156,12 +161,19 @@ class Stock_Settings {
 			'wc_bsale_stock_section'
 		);
 
+		add_settings_section(
+			'wc_bsale_order_stock_section',
+			'Order processing',
+			array( $this, 'storefront_order_settings_section_description' ),
+			'wc-bsale-settings-stock'
+		);
+
 		add_settings_field(
 			'wc_bsale_transversal_stock_order',
-			'After an order is placed',
+			'When an order is processed',
 			array( $this, 'transversal_order_settings_field_callback' ),
 			'wc-bsale-settings-stock',
-			'wc_bsale_stock_section'
+			'wc_bsale_order_stock_section'
 		);
 
 		settings_fields( 'wc_bsale_stock_settings_group' );
@@ -169,7 +181,7 @@ class Stock_Settings {
 	}
 
 	public function admin_stock_settings_section_description(): void {
-		echo '<p>Settings to manage the stock synchronization between WooCommerce and Bsale on the admin side (back office).</p>';
+		echo '<hr><p>Settings to manage the stock synchronization between WooCommerce and Bsale on the admin side (back office).</p>';
 		echo
 		'<div class="wc-bsale-notice wc-bsale-notice-warning">
 			<p><span class="dashicons dashicons-warning"></span> When updating the stock of a product from the admin, the update will trigger native WooCommerce events for stock management. Please
@@ -200,7 +212,7 @@ class Stock_Settings {
 	}
 
 	public function storefront_stock_settings_section_description(): void {
-		echo '<p>Settings to manage the stock synchronization between WooCommerce and Bsale on the storefront side (front office).</p>';
+		echo '<hr><p>Settings to manage the stock synchronization between WooCommerce and Bsale on the storefront side (front office).</p>';
 	}
 
 	public function storefront_cart_settings_field_callback(): void {
@@ -230,12 +242,16 @@ class Stock_Settings {
 		<?php
 	}
 
+	public function storefront_order_settings_section_description() {
+		echo '<hr><p>Settings to manage the stock consumption in Bsale when an order is processed in WooCommerce.</p>';
+	}
+
 	public function transversal_order_settings_field_callback(): void {
 		?>
 		<fieldset>
 			<legend class="screen-reader-text"><span>After an order is placed</span></legend>
 			<label for="wc_bsale_transversal_order_officeid" style="display: inline">
-				Deduct (consume) the stock of the products in the order on Bsale on this office:
+				Deduct (consume) the stock of the products in the order on this office in Bsale:
 				<select id="wc_bsale_transversal_order_officeid" name="wc_bsale_transversal_stock[order_officeid]" style="width: 25%">
 					<?php
 					if ( $this->selected_office ) {
@@ -244,7 +260,7 @@ class Stock_Settings {
 					?>
 				</select>
 			</label>
-			<p class="description">After an order is placed, the stock of the products in the order will be deducted (consumed) on Bsale on the selected office. If no office is selected, no stock will be deducted.</p>
+			<p class="description">After an order is processed, the stock of the products in the order will be deducted (consumed) on Bsale on the selected office. If no office is selected, no stock will be deducted.</p>
 			<div class="wc-bsale-notice wc-bsale-notice-info">
 				<p><span class="dashicons dashicons-visibility"></span> If you don't see the office you are looking for, please make sure that the office is active in Bsale and its name is not empty.</p>
 			</div>
@@ -278,6 +294,15 @@ class Stock_Settings {
 				The plugin will keep track of the items in the order that has already been deducted on Bsale, preventing the stock from being deducted multiple times.
 			</p>
 		</div>
+		<fieldset>
+			<label>Include the following note in the stock consumption operation in Bsale:
+				<input type="text" id="wc_bsale_transversal_stock[note]" name="wc_bsale_transversal_stock[note]" value="<?php echo esc_attr( $this->transversal_settings['note'] ?? '' ); ?>" style="width: 100%">
+			</label>
+			<p class="description">
+				This note will be displayed in Bsale's interface and can be useful to identify the stock consumption operation. The {1} placeholder will be replaced with the name of the store, and the {2} placeholder will be replaced with the order number.
+				For example, if this setting is set to "{1} - Order {2}", and the store name is "My Store" and the order number is "123", the note in Bsale will say "My Store - Order 123". The maximum length is 100 characters.
+			</p>
+		</fieldset>
 		<?php
 	}
 }
