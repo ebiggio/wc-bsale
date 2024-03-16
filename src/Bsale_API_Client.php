@@ -25,14 +25,16 @@ class Bsale_API_Client {
 	}
 
 	/**
-	 * Makes an HTTP GET request to the Bsale API.
+	 * Makes a request to the Bsale API.
 	 *
-	 * @param string $endpoint The endpoint to request.
+	 * @param string     $endpoint The endpoint to request.
+	 * @param string     $method   The HTTP method to use. Defaults to 'GET'.
+	 * @param array|null $body     The body of the request. Defaults to null.
 	 *
-	 * @return mixed The response from the API.
-	 * @throws \Exception If there was an error making the request.
+	 * @return object An object representing the response body.
+	 * @throws \Exception If the access token is not set, if there was an error making the request, or if the response code is not 2xx.
 	 */
-	private function make_request( string $endpoint ): mixed {
+	private function make_request( string $endpoint, string $method = 'GET', array $body = null ): mixed {
 		// Check if the access token is set and throw an exception if it's not
 		if ( '' === $this->access_token ) {
 			throw new \Exception( 'The Bsale API access token is not set.' );
@@ -47,13 +49,24 @@ class Bsale_API_Client {
 			),
 		);
 
-		$bsale_response = wp_remote_get( $this->api_url . $endpoint, $args );
+		if ( 'POST' === $method ) {
+			$args['method'] = 'POST';
+			$args['body']   = json_encode( $body );
+		}
 
-		if ( is_wp_error( $bsale_response ) || 200 !== wp_remote_retrieve_response_code( $bsale_response ) ) {
+		$bsale_response = wp_remote_request( $this->api_url . $endpoint, $args );
+
+		if ( is_wp_error( $bsale_response ) || 2 !== (int) ( wp_remote_retrieve_response_code( $bsale_response ) / 100 ) ) {
 			if ( is_wp_error( $bsale_response ) ) {
 				$this->bsale_wp_error = $bsale_response;
 			} else {
-				$this->bsale_wp_error = new \WP_Error( wp_remote_retrieve_response_code( $bsale_response ), wp_remote_retrieve_response_message( $bsale_response ) );
+				$response_body = json_decode( wp_remote_retrieve_body( $bsale_response ) );
+
+				if ( isset( $response_body->error ) ) {
+					$this->bsale_wp_error = new \WP_Error( wp_remote_retrieve_response_code( $bsale_response ), $response_body->error );
+				} else {
+					$this->bsale_wp_error = new \WP_Error( wp_remote_retrieve_response_code( $bsale_response ), wp_remote_retrieve_response_message( $bsale_response ) );
+				}
 			}
 
 			throw new \Exception( 'Error making the request to the Bsale API: ' . $this->bsale_wp_error->get_error_message() );
@@ -64,16 +77,32 @@ class Bsale_API_Client {
 		return json_decode( wp_remote_retrieve_body( $this->bsale_response ) );
 	}
 
-	public function get_last_response(): array|null {
+	/**
+	 * Retrieves the last **successful** response from Bsale.
+	 *
+	 * @param bool $only_body If true, will return only the body of the response. Defaults to false.
+	 *
+	 * @return array|null The last successful response from Bsale, or null if no request was made or if the last request was not successful.
+	 */
+	public function get_last_response( bool $only_body = false ): array|null {
+		if ( $only_body ) {
+			return json_decode( wp_remote_retrieve_body( $this->bsale_response ) );
+		}
+
 		return $this->bsale_response;
 	}
 
+	/**
+	 * Retrieves the last error from Bsale.
+	 *
+	 * @return \WP_Error|null The last error from Bsale as a \WP_Error object, or null if no request was made or if there was no error in the last request.
+	 */
 	public function get_last_wp_error(): \WP_Error|null {
 		return $this->bsale_wp_error;
 	}
 
 	/**
-	 * Retrieves a product's stock by its code.
+	 * Retrieves a product's stock by its code from Bsale.
 	 *
 	 * @param $code string The product's code. We assume that, in WooCommerce, the code is the product's SKU.
 	 *
