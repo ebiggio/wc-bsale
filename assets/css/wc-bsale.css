@@ -40,3 +40,19 @@
     font-weight: bold;
     color: #007cba;
 }
+
+.wp-list-table .log-error {
+    background-color: #ffdddd;
+}
+
+.wp-list-table .log-warning {
+    background-color: #fff3cd;
+}
+
+.wp-list-table .log-success {
+    background-color: #d4edda;
+}
+
+.wp-list-table .column-message {
+    width: 40%;
+}

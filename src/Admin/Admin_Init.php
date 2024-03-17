@@ -16,11 +16,12 @@ defined( 'ABSPATH' ) || exit;
  * Admin_Init class
  */
 class Admin_Init {
-	private Settings_Manager $settings;
+	private object $settings_manager;
 
 	public function __construct() {
+		$this->settings_manager = new Settings_Manager();
+
 		add_action( 'admin_menu', array( $this, 'add_admin_menu' ) );
-		$this->settings = new Settings_Manager();
 
 		// Add the admin hooks for the stock synchronization
 		new Hooks\Stock();
@@ -42,12 +43,27 @@ class Admin_Init {
 		}
 
 		add_menu_page(
-			'WooCommerce Bsale plugin settings', // Page title
-			'WooCommerce Bsale', // Menu title
-			'manage_options', // Capability
-			'wc-bsale-settings', // Menu slug
-			array( $this->settings, 'settings_page_content' ), // Callback
-			PLUGIN_URL . 'assets/images/bsale_icon_bw.png' // Icon
-		);
+			'WooCommerce Bsale',
+			'WooCommerce Bsale',
+			'manage_options',
+			'wc-bsale-settings',
+			array( $this->settings_manager, 'settings_page_content' ),
+			PLUGIN_URL . 'assets/images/bsale_icon_bw.png' );
+
+		add_submenu_page(
+			'wc-bsale-settings',
+			'Settings',
+			'Settings',
+			'manage_options',
+			'wc-bsale-settings',
+			array( $this->settings_manager, 'settings_page_content' ) );
+
+		add_submenu_page(
+			'wc-bsale-settings',
+			'Operations log',
+			'Operations log',
+			'manage_options',
+			'wc-bsale-logs',
+			array( new Log_Viewer(), 'log_page_content' ) );
 	}
 }
