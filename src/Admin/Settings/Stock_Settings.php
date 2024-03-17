@@ -158,7 +158,7 @@ class Stock_Settings {
 			'During checkout interaction',
 			array( $this, 'storefront_checkout_settings_field_callback' ),
 			'wc-bsale-settings-stock',
-			'wc_bsale_stock_section'
+			'wc_bsale_storefront_stock_section'
 		);
 
 		add_settings_section(
