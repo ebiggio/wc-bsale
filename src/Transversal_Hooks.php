@@ -96,6 +96,7 @@ class Transversal_Hooks implements API_Consumer {
 
 		// wc = WooCommerce. Meaning that the stock must be consumed when WooCommerce reduces the stock
 		if ( 'wc' === $order_event ) {
+			// This sends the order object to the callback function
 			add_action( 'woocommerce_reduce_order_stock', array( $this, 'check_order_for_stock_consumption' ) );
 		} else {
 			// The $order_event is set to "custom", so we hook to each defined order status to consume the stock when an order reaches that status
@@ -103,22 +104,42 @@ class Transversal_Hooks implements API_Consumer {
 
 			foreach ( $order_status as $status ) {
 				if ( wc_is_order_status( $status ) ) {
-					add_action( 'woocommerce_order_status_' . substr( $status, 3 ), array( $this, 'check_order_for_stock_consumption' ) );
+					// This sends the ID of the order to the callback function, so we hook to a function that will get the order object
+					add_action( 'woocommerce_order_status_' . substr( $status, 3 ), array( $this, 'get_order_for_checking_stock_consumption' ) );
 				}
 			}
 		}
 	}
 
 	/**
-	 * Check an order's products to see if their stock was consumed in Bsale. If not, consume it.
+	 * Gets the order object and sends it to the function that will check if the stock was consumed in Bsale.
 	 *
-	 * @param int $order_id The ID of the order that contains the products that will be checked.
+	 * @param int $order_id The ID of the order to be checked.
 	 *
 	 * @return void
 	 */
-	public function check_order_for_stock_consumption( int $order_id ): void {
-		// Get the order
+	private function get_order_for_checking_stock_consumption( int $order_id ): void {
 		$order = wc_get_order( $order_id );
+
+		if ( ! $order ) {
+			return;
+		}
+
+		$this->check_order_for_stock_consumption( $order );
+
+	}
+
+	/**
+	 * Check an order's products to see if their stock was consumed in Bsale. If not, consume it.
+	 *
+	 * @param object $order The WooCommerce order object that contains the products that will be checked.
+	 *
+	 * @return void
+	 */
+	public function check_order_for_stock_consumption( object $order ): void {
+		if ( ! $order ) {
+			return;
+		}
 
 		$products_to_consume_stock = array();
 		$items_to_update_meta      = array();
