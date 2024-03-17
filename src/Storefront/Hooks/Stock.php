@@ -34,11 +34,11 @@ class Stock implements API_Consumer {
 		}
 
 		if ( isset( $this->storefront_stock_settings['cart'] ) ) {
-			add_action( 'woocommerce_add_to_cart', array( $this, 'wc_bsale_add_to_cart_hook' ), 10, 4 );
+			add_action( 'woocommerce_add_to_cart', array( $this, 'add_to_cart' ), 10, 4 );
 		}
 
 		if ( isset( $this->storefront_stock_settings['checkout'] ) ) {
-			add_action( 'woocommerce_check_cart_items', array( $this, 'wc_bsale_check_cart_items_hook' ) );
+			add_action( 'woocommerce_check_cart_items', array( $this, 'check_cart_items_checkout' ) );
 		}
 
 		// Add the database logger as an observer
@@ -87,7 +87,7 @@ class Stock implements API_Consumer {
 	 *
 	 * @return void
 	 */
-	public function wc_bsale_add_to_cart_hook( $cart_item_key, $product_id, $quantity, $variation_id ): void {
+	public function add_to_cart( $cart_item_key, $product_id, $quantity, $variation_id ): void {
 		// Get the product object that was added to the cart
 		$product = wc_get_product( $product_id );
 
@@ -103,7 +103,7 @@ class Stock implements API_Consumer {
 
 		$bsale_api = new Bsale_API_Client;
 
-		$this->update_stock_if_needed( $bsale_api, $product );
+		$this->update_stock_if_needed( 'add_to_cart', $bsale_api, $product );
 	}
 
 	/**
@@ -115,7 +115,7 @@ class Stock implements API_Consumer {
 	 *
 	 * @return void
 	 */
-	public function wc_bsale_check_cart_items_hook(): void {
+	public function check_cart_items_checkout(): void {
 		// We only want to check the cart items if we are in the checkout page
 		if ( ! is_checkout() ) {
 			return;
@@ -145,7 +145,7 @@ class Stock implements API_Consumer {
 				continue;
 			}
 
-			$this->update_stock_if_needed( $bsale_api, $product );
+			$this->update_stock_if_needed( 'check_cart_items_checkout', $bsale_api, $product );
 		}
 	}
 
@@ -180,24 +180,25 @@ class Stock implements API_Consumer {
 	/**
 	 * Updates the stock of a product in WooCommerce if it differs from the stock in Bsale.
 	 *
-	 * @param Bsale_API_Client $bsale_api The Bsale API client object.
-	 * @param \WC_Product      $product   The product object.
+	 * @param string           $event_trigger The event trigger that originated the stock update.
+	 * @param Bsale_API_Client $bsale_api     The Bsale API client object.
+	 * @param \WC_Product      $product       The product object.
 	 *
 	 * @return void
 	 */
-	private function update_stock_if_needed( Bsale_API_Client $bsale_api, \WC_Product $product ): void {
+	private function update_stock_if_needed( string $event_trigger, Bsale_API_Client $bsale_api, \WC_Product $product ): void {
 		// Get the stock of the product in Bsale
 		try {
 			$bsale_stock = $bsale_api->get_stock_by_code( $product->get_sku() );
 		} catch ( \Exception $e ) {
-			$this->notify_observers( 'wc_bsale_check_cart_items_hook', 'stock_update', $product->get_sku(), $e->getMessage(), 'error' );
+			$this->notify_observers( $event_trigger, 'stock_update', $product->get_sku(), $e->getMessage(), 'error' );
 
 			return;
 		}
 
 		// If the product doesn't have a stock in Bsale, we can't sync it
 		if ( ! $bsale_stock ) {
-			$this->notify_observers( 'wc_bsale_check_cart_items_hook', 'stock_update', $product->get_sku(), 'The product does not have a stock in Bsale', 'warning' );
+			$this->notify_observers( $event_trigger, 'stock_update', $product->get_sku(), 'The product does not have a stock in Bsale', 'warning' );
 
 			return;
 		}
@@ -207,7 +208,7 @@ class Stock implements API_Consumer {
 			$product->set_stock_quantity( $bsale_stock );
 			$product->save();
 
-			$this->notify_observers( 'wc_bsale_check_cart_items_hook', 'stock_update', $product->get_sku(), 'Stock updated to [' . $bsale_stock . ']', 'success' );
+			$this->notify_observers( $event_trigger, 'stock_update', $product->get_sku(), 'Stock updated to ' . $bsale_stock, 'success' );
 		}
 	}
 }
