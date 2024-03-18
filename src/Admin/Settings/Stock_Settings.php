@@ -31,7 +31,7 @@ class Stock_Settings {
 		$this->transversal_settings = maybe_unserialize( get_option( 'wc_bsale_transversal_stock' ) );
 
 		// Check if an office ID is stored in the configuration. If it is, get its name from Bsale to set it as the selected option in the select element
-		$office_id = (int) ($this->transversal_settings['order_officeid'] ?? null);
+		$office_id = (int) ($this->transversal_settings['office_id'] ?? null);
 
 		if ( $office_id ) {
 			$bsale_api_client = new Bsale_API_Client();
@@ -124,6 +124,21 @@ class Stock_Settings {
 		</div>
 		<?php
 		add_settings_section(
+			'wc_bsale_office_stock_section',
+			'Office selection',
+			array( $this, 'office_stock_settings_section_description' ),
+			'wc-bsale-settings-stock'
+		);
+
+		add_settings_field(
+			'wc_bsale_office_stock_edit',
+			'Office that manages the stock',
+			array( $this, 'office_edit_settings_field_callback' ),
+			'wc-bsale-settings-stock',
+			'wc_bsale_office_stock_section'
+		);
+
+		add_settings_section(
 			'wc_bsale_admin_stock_section',
 			'Admin integration',
 			array( $this, 'admin_stock_settings_section_description' ),
@@ -178,6 +193,32 @@ class Stock_Settings {
 
 		settings_fields( 'wc_bsale_stock_settings_group' );
 		do_settings_sections( 'wc-bsale-settings-stock' );
+	}
+
+	public function office_stock_settings_section_description() {
+		echo '<hr><p>Defines the office that manages the stock of the products in Bsale. This office will be used to get and deduct the stock of the products.</p>';
+	}
+
+	public function office_edit_settings_field_callback() {
+		?>
+		<fieldset>
+			<legend class="screen-reader-text"><span>Office for stock operations</span></legend>
+			<select id="wc_bsale_stock_office_id" name="wc_bsale_transversal_stock[office_id]" style="width: 50%">
+				<?php
+				if ( $this->selected_office ) {
+					echo '<option value="' . $this->selected_office['id'] . '" selected>' . $this->selected_office['text'] . '</option>';
+				}
+				?>
+			</select>
+			<p class="description">All the stock operations will be performed using the stock of the products in this office.</p>
+			<div class="wc-bsale-notice wc-bsale-notice-info">
+				<p><span class="dashicons dashicons-visibility"></span> If you don't see the office you are looking for, please make sure that the office is active in Bsale and its name is not empty.</p>
+			</div>
+			<div class="wc-bsale-notice wc-bsale-notice-error">
+				<p><span class="dashicons dashicons-no-alt"></span> If no office is selected, all the stock operations won't be performed in Bsale, essentially disabling the stock synchronization features.</p>
+			</div>
+		</fieldset>
+		<?php
 	}
 
 	public function admin_stock_settings_section_description(): void {
@@ -248,24 +289,6 @@ class Stock_Settings {
 
 	public function transversal_order_settings_field_callback(): void {
 		?>
-		<fieldset>
-			<legend class="screen-reader-text"><span>After an order is placed</span></legend>
-			<label for="wc_bsale_transversal_order_officeid" style="display: inline">
-				Deduct (consume) the stock of the products in the order on this office in Bsale:
-				<select id="wc_bsale_transversal_order_officeid" name="wc_bsale_transversal_stock[order_officeid]" style="width: 25%">
-					<?php
-					if ( $this->selected_office ) {
-						echo '<option value="' . $this->selected_office['id'] . '" selected>' . $this->selected_office['text'] . '</option>';
-					}
-					?>
-				</select>
-			</label>
-			<p class="description">After an order is processed, the stock of the products in the order will be deducted (consumed) on Bsale on the selected office. If no office is selected, no stock will be deducted.</p>
-			<div class="wc-bsale-notice wc-bsale-notice-info">
-				<p><span class="dashicons dashicons-visibility"></span> If you don't see the office you are looking for, please make sure that the office is active in Bsale and its name is not empty.</p>
-			</div>
-		</fieldset>
-		<br>
 		<fieldset class="wc-bsale-related-fieldset">
 			<legend>When should the stock be deducted (consumed) in Bsale?</legend>
 			<label>
