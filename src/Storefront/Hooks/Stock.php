@@ -23,13 +23,22 @@ defined( 'ABSPATH' ) || exit;
  */
 class Stock implements API_Consumer {
 	private mixed $storefront_stock_settings;
+	private mixed $transversal_stock_settings;
 	private array $observers = array();
 
 	public function __construct() {
-		$this->storefront_stock_settings = maybe_unserialize( get_option( 'wc_bsale_storefront_stock' ) );
+		$this->storefront_stock_settings  = maybe_unserialize( get_option( 'wc_bsale_storefront_stock' ) );
+		$this->transversal_stock_settings = maybe_unserialize( get_option( 'wc_bsale_transversal_stock' ) );
 
 		// Check if any of the stock settings for the storefront side are enabled. If not, we don't need to add the hooks
 		if ( ! $this->storefront_stock_settings ) {
+			return;
+		}
+
+		// Check if the office ID is set. If not, we don't need to add the hooks
+		$office_id = $this->transversal_stock_settings['office_id'] ?? 0;
+
+		if ( ! $office_id ) {
 			return;
 		}
 
@@ -189,7 +198,7 @@ class Stock implements API_Consumer {
 	private function update_stock_if_needed( string $event_trigger, Bsale_API_Client $bsale_api, \WC_Product $product ): void {
 		// Get the stock of the product in Bsale
 		try {
-			$bsale_stock = $bsale_api->get_stock_by_code( $product->get_sku() );
+			$bsale_stock = $bsale_api->get_stock_by_code( $product->get_sku(), $this->transversal_stock_settings['office_id'] );
 		} catch ( \Exception $e ) {
 			$this->notify_observers( $event_trigger, 'stock_update', $product->get_sku(), $e->getMessage(), 'error' );
 

@@ -73,10 +73,13 @@ class Transversal_Hooks implements API_Consumer {
 	 * @return array[]
 	 */
 	private function get_transversal_options(): array {
+		$transversal_stock_options = maybe_unserialize( get_option( 'wc_bsale_transversal_stock' ) );
+
 		return array(
 			'stock' =>
 				array(
-					'order' => maybe_unserialize( get_option( 'wc_bsale_transversal_stock' ) ),
+					'order'    => $transversal_stock_options,
+					'office_id' => $transversal_stock_options['office_id'] ?? 0,
 				),
 		);
 	}
@@ -88,7 +91,7 @@ class Transversal_Hooks implements API_Consumer {
 	 */
 	private function stock_hooks(): void {
 		// The stock hooks dependes of an office being set to use it when consuming the stock
-		if ( ! (int) $this->transversal_options['stock']['order']['order_officeid'] ) {
+		if ( ! (int) $this->transversal_options['stock']['office_id'] ) {
 			return;
 		}
 
@@ -145,11 +148,6 @@ class Transversal_Hooks implements API_Consumer {
 		$items_to_update_meta      = array();
 
 		foreach ( $order->get_items() as $item ) {
-			// Check if the stock was already consumed in Bsale
-			if ( $item->get_meta( '_wc_bsale_stock_consumed' ) ) {
-				continue;
-			}
-
 			// Get the product
 			$product = $item->get_product();
 
@@ -186,7 +184,7 @@ class Transversal_Hooks implements API_Consumer {
 			// Set a custom meta key to indicate that the stock was consumed in Bsale
 			foreach ( $items_to_update_meta as $item ) {
 				$item->add_meta_data( '_wc_bsale_stock_consumed', true, true );
-				$item->save();
+				$item->save_meta_data();
 			}
 		}
 	}
@@ -200,7 +198,7 @@ class Transversal_Hooks implements API_Consumer {
 	 * @return bool True if the stock was consumed successfully for all the provided products. False if an empty office ID was provided, or if there was an error consuming the stock.
 	 */
 	private function consume_bsale_stock( int $order_number, array $products_to_consume_stock ): bool {
-		$office_id = (int) $this->transversal_options['stock']['order']['order_officeid'];
+		$office_id = (int) $this->transversal_options['stock']['office_id'];
 
 		$note           = strip_tags( $this->transversal_options['stock']['order']['note'] );
 		$formatted_note = str_replace( array( '{1}', '{2}', "\r", "\n" ), array( get_bloginfo( 'name' ), $order_number, '', '' ), $note );
