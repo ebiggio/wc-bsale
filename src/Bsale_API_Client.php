@@ -32,7 +32,7 @@ class Bsale_API_Client {
 	 * @param array|null $body     The body of the request. Defaults to null.
 	 *
 	 * @return object An object representing the response body.
-	 * @throws \Exception If the access token is not set, if there was an error making the request, or if the response code is not 2xx.
+	 * @throws \Exception If the access token is not set, there was an error making the request, or if the response code is not 2xx.
 	 */
 	private function make_request( string $endpoint, string $method = 'GET', array $body = null ): mixed {
 		// Check if the access token is set and throw an exception if it's not
@@ -162,7 +162,7 @@ class Bsale_API_Client {
 	 *
 	 * @param int $office_id The ID of the office to get.
 	 *
-	 * @return array The office's data. Will be empty if the office was not found, if an empty ID was provided, or if the office is not active.
+	 * @return array The office's data. Will be empty if the office was not found, an empty ID was provided, or if the office is not active.
 	 * @throws \Exception If there was an error fetching the office from Bsale.
 	 */
 	public function get_office_by_id( int $office_id ): array {
@@ -192,11 +192,11 @@ class Bsale_API_Client {
 	/**
 	 * Consumes stock of products in Bsale.
 	 *
-	 * @param string $note      A description of the stock consumption. It will be displayed in Bsale's interface. Max length will be set to 100 characters.
+	 * @param string $note      A description of the stock consumption. Will be displayed in Bsale's interface. Max length will be set to 100 characters.
 	 * @param int    $office_id The ID of the office to consume the stock from.
 	 * @param array  $products  An array of products to consume the stock from. Each product must have a 'code' and a 'quantity' key, and the 'quantity' must be greater than 0.
 	 *
-	 * @return bool True if the stock was consumed successfully. False if an empty note or office ID was provided, or if there was an error consuming the stock.
+	 * @return bool True if the stock was consumed successfully for all the products. False if an empty note or office ID was provided, or if there was an error consuming the stock.
 	 */
 	public function consume_stock( string $note, int $office_id, array $products ): bool {
 		if ( 0 === $office_id ) {

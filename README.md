@@ -12,18 +12,18 @@ The WooCommerce Bsale Integration Plugin is designed to improve the WooCommerce 
 
 ### Main Features
 
-- **Stock Synchronization**: The plugin has several options to keep the stock levels in sync with Bsale, including manual, scheduled, and real-time stock updates. The real-time updates can be triggered by actions either in the admin area or on the storefront, and can be activated or deactivated according to your needs.
+- **Stock synchronization**: The plugin has several options to keep the stock levels in sync with Bsale, including manual, scheduled, and real-time stock updates. The real-time updates can be triggered by actions either in the admin area or on the storefront, and can be activated or deactivated according to your needs.
 
-- **Price Synchronization**: Planned feature.
+- **Price synchronization**: Planned feature.
 
-- **Invoice Generation**: Planned feature.
+- **Invoice generation**: Planned feature.
 
 
 ## Installation
 
 1. Download the plugin files.
 2. Upload the plugin files to the `/wp-content/plugins/` directory of your WordPress site, or install the plugin through the WordPress plugins screen directly.
-3. Activate the plugin through the 'Plugins' screen in WordPress.
+3. Activate the plugin through the "Plugins" screen in WordPress.
 4. Navigate to the "WooCommerce Bsale" settings page to configure the plugin.
 
 ## Configuration
