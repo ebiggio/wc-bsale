@@ -102,31 +102,30 @@ class Bsale_API_Client {
 	}
 
 	/**
-	 * Retrieves a product's stock by its code from Bsale.
+	 * Retrieves a product's **available** stock by its code from a specific office in Bsale.
 	 *
-	 * @param $code string The product's code. We assume that, in WooCommerce, the code is the product's SKU.
+	 * @param $code      string The product's code. We assume that, in WooCommerce, the code is the product's SKU.
+	 * @param $office_id int The ID of the office to get the stock from.
 	 *
-	 * @return int|bool The product's stock, or false if an empty code was provided or if no stock was found in Bsale.
+	 * @return int|bool The product's stock, or false if an empty code or office ID was provided or if no stock was found in Bsale.
 	 * @throws \Exception If there was an error fetching the stock from Bsale.
 	 */
-	public function get_stock_by_code( string $code ): bool|int {
-		if ( '' === $code ) {
+	public function get_stock_by_code( string $code, int $office_id ): bool|int {
+		if ( '' === $code || 0 === $office_id ) {
 			return false;
 		}
 
-		$api_endpoint = 'stocks.json?code=' . $code;
+		$api_endpoint = 'stocks.json?code=' . $code . '&officeid=' . $office_id;
 
-		$stock_list = $this->make_request( $api_endpoint );
+		$office_stock = $this->make_request( $api_endpoint );
 
-		if ( 0 === $stock_list->count ) {
-			// No stock found for the code provided (doesn't mean that the product doesn't exist in Bsale; just that it has no stock)
+		if ( 0 === $office_stock->count ) {
+			// No stock found for the code provided (doesn't mean that the product doesn't exist in Bsale; just that it has no stock in the office)
 			return false;
 		}
 
-		// Get only the first item of the collection
-		$stock = $stock_list->items[0];
-
-		return (int) $stock->quantityAvailable;
+		// Return the available stock of the product
+		return (int) $office_stock->items[0]->quantityAvailable;
 	}
 
 	/**
