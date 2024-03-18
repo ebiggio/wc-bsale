@@ -203,7 +203,7 @@ class Stock_Settings {
 		?>
 		<fieldset>
 			<legend class="screen-reader-text"><span>Office for stock operations</span></legend>
-			<select id="wc_bsale_stock_office_id" name="wc_bsale_transversal_stock[office_id]" style="width: 50%">
+			<select id="wc_bsale_transversal_stock_office_id" name="wc_bsale_transversal_stock[office_id]" style="width: 50%">
 				<?php
 				if ( $this->selected_office ) {
 					echo '<option value="' . $this->selected_office['id'] . '" selected>' . $this->selected_office['text'] . '</option>';

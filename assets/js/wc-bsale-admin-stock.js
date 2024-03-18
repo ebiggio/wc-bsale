@@ -6,7 +6,7 @@ document.getElementById('wc_bsale_admin_stock_edit').addEventListener('change', 
 document.addEventListener('DOMContentLoaded', updateAutoCheckboxStatus);
 
 jQuery(document).ready(function ($) {
-    $('#wc_bsale_transversal_order_officeid').select2({
+    $('#wc_bsale_transversal_stock_office_id').select2({
         placeholder: bsale_offices.select2_placeholder,
         minimumInputLength: 2,
         allowClear: true,
