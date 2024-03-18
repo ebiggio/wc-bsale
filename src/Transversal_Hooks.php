@@ -26,6 +26,12 @@ class Transversal_Hooks implements API_Consumer {
 		// Add the hooks after WooCommerce is loaded
 		add_action( 'woocommerce_loaded', array( $this, 'init_hooks' ) );
 
+		// Hide the meta data from the order items
+		add_filter( 'woocommerce_hidden_order_itemmeta', function ( $hidden_order_itemmeta ) {
+			$hidden_order_itemmeta[] = '_wc_bsale_stock_consumed';
+			return $hidden_order_itemmeta;
+		} );
+
 		// Add the database logger as an observer
 		$this->add_observer( DB_Logger::get_instance() );
 	}
