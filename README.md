@@ -1,6 +1,6 @@
 # ![Bsale Icon](/assets/images/bsale_icon.png) WooCommerce Bsale Integration Plugin
 
-*Version: 0.1.0*
+*Version: 0.3.0*
 
 ### Work in Progress
 
