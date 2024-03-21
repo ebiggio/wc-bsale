@@ -32,7 +32,14 @@ class Log_Viewer extends \WP_List_Table {
 
 		$this->table_name = $GLOBALS['wpdb']->prefix . 'wc_bsale_operation_log';
 
-		wp_enqueue_style( 'wc-bsale-admin', PLUGIN_URL . 'assets/css/wc-bsale.css', array(), PLUGIN_VERSION );
+		// Load the admin styles only if we are in the log page
+		add_action( 'admin_enqueue_scripts', function ( $hook ) {
+			if ( 'woocommerce-bsale_page_wc-bsale-logs' !== $hook ) {
+				return;
+			}
+
+			wp_enqueue_style( 'wc-bsale-admin', PLUGIN_URL . 'assets/css/wc-bsale.css', array(), PLUGIN_VERSION );
+		} );
 	}
 
 	/**
