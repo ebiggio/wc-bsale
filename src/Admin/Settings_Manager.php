@@ -17,6 +17,8 @@ defined( 'ABSPATH' ) || exit;
  * Settings_Manager class
  */
 class Settings_Manager {
+	private object|null $cron_settings = null;
+
 	public function __construct() {
 		add_action( 'admin_init', array( $this, 'init_settings' ) );
 
@@ -40,6 +42,9 @@ class Settings_Manager {
 		register_setting( 'wc_bsale_stock_settings_group', 'wc_bsale_admin_stock' );
 		register_setting( 'wc_bsale_stock_settings_group', 'wc_bsale_storefront_stock' );
 		register_setting( 'wc_bsale_stock_settings_group', 'wc_bsale_transversal_stock' );
+
+		$this->cron_settings = new Settings\Cron_Settings();
+		register_setting( 'wc_bsale_cron_settings_group', 'wc_bsale_cron', array( $this->cron_settings, 'validate_cron_settings' ) );
 	}
 
 	/**
@@ -62,6 +67,7 @@ class Settings_Manager {
 		$settings_tabs = array(
 			''      => 'Main settings',
 			'stock' => 'Stock synchronization',
+			'cron'  => 'Cron settings',
 			//'prices' => 'Prices synchronization',
 			//'orders' => 'Orders events',
 		);
@@ -75,6 +81,9 @@ class Settings_Manager {
 		switch ( $tab ) {
 			case 'stock':
 				new Settings\Stock_Settings();
+				break;
+			case 'cron':
+				$this->cron_settings->settings_page_content();
 				break;
 			default:
 				new Settings\Main_Settings();

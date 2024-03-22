@@ -51,6 +51,9 @@ register_activation_hook( __FILE__, function () {
 // Autoloader
 require_once plugin_dir_path( __FILE__ ) . '/src/Autoload.php';
 
+// Expose the hook for the cron job
+add_action( 'wc_bsale_cron', array( new Cron(), 'run' ) );
+
 // And away we go
 // --------------
 // Load the transversal hooks, which are hooks that can be fired both from the storefront or the admin side
