@@ -29,6 +29,7 @@ class Transversal_Hooks implements API_Consumer {
 		// Hide the meta data from the order items
 		add_filter( 'woocommerce_hidden_order_itemmeta', function ( $hidden_order_itemmeta ) {
 			$hidden_order_itemmeta[] = '_wc_bsale_stock_consumed';
+
 			return $hidden_order_itemmeta;
 		} );
 
@@ -84,7 +85,7 @@ class Transversal_Hooks implements API_Consumer {
 		return array(
 			'stock' =>
 				array(
-					'order'    => $transversal_stock_options,
+					'order'     => $transversal_stock_options,
 					'office_id' => $transversal_stock_options['office_id'] ?? 0,
 				),
 		);
@@ -127,7 +128,7 @@ class Transversal_Hooks implements API_Consumer {
 	 *
 	 * @return void
 	 */
-	private function get_order_for_checking_stock_consumption( int $order_id ): void {
+	public function get_order_for_checking_stock_consumption( int $order_id ): void {
 		$order = wc_get_order( $order_id );
 
 		if ( ! $order ) {
