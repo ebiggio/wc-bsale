@@ -16,12 +16,16 @@ defined( 'ABSPATH' ) || exit;
 class Bsale_API_Client {
 	private string $api_url;
 	private string $access_token;
+	private string $product_identifier;
 	private array|null $bsale_response = null;
 	private \WP_Error|null $bsale_wp_error = null;
 
 	public function __construct() {
-		$this->api_url      = 'https://api.bsale.io/v1/';
-		$this->access_token = get_option( 'wc_bsale_sandbox_access_token' );
+		$this->api_url = 'https://api.bsale.io/v1/';
+
+		$main_settings            = maybe_unserialize( get_option( 'wc_bsale_main' ) );
+		$this->access_token       = $main_settings['sandbox_access_token'] ?? '';
+		$this->product_identifier = $main_settings['product_identifier'] ?? '';
 	}
 
 	/**
@@ -102,25 +106,25 @@ class Bsale_API_Client {
 	}
 
 	/**
-	 * Retrieves a product's **available** stock by its code from a specific office in Bsale.
+	 * Retrieves a product's **available** stock by its identifier from a specific office in Bsale.
 	 *
-	 * @param $code      string The product's code. We assume that, in WooCommerce, the code is the product's SKU.
-	 * @param $office_id int The ID of the office to get the stock from.
+	 * @param $identifier string The product's identifier. Can be the product's code or barcode.
+	 * @param $office_id  int The ID of the office to get the stock from.
 	 *
-	 * @return int|bool The product's stock, or false if an empty code or office ID was provided or if no stock was found in Bsale.
+	 * @return int|bool The product's stock, or false if an empty identifier or office ID was provided or if no stock was found in Bsale.
 	 * @throws \Exception If there was an error fetching the stock from Bsale.
 	 */
-	public function get_stock_by_code( string $code, int $office_id ): bool|int {
-		if ( '' === $code || 0 === $office_id ) {
+	public function get_stock_by_identifier( string $identifier, int $office_id ): bool|int {
+		if ( '' === $identifier || 0 === $office_id ) {
 			return false;
 		}
 
-		$api_endpoint = 'stocks.json?code=' . $code . '&officeid=' . $office_id;
+		$api_endpoint = 'stocks.json?' . $this->product_identifier . '=' . $identifier . '&officeid=' . $office_id;
 
 		$office_stock = $this->make_request( $api_endpoint );
 
 		if ( 0 === $office_stock->count ) {
-			// No stock found for the code provided (doesn't mean that the product doesn't exist in Bsale; just that it has no stock in the office)
+			// No stock found for the identifier provided (doesn't mean that the product doesn't exist in Bsale; just that it has no stock in the office)
 			return false;
 		}
 
@@ -194,7 +198,7 @@ class Bsale_API_Client {
 	 *
 	 * @param string $note      A description of the stock consumption. Will be displayed in Bsale's interface. Max length will be set to 100 characters.
 	 * @param int    $office_id The ID of the office to consume the stock from.
-	 * @param array  $products  An array of products to consume the stock from. Each product must have a 'code' and a 'quantity' key, and the 'quantity' must be greater than 0.
+	 * @param array  $products  An array of products to consume the stock from. Each product must have an SKU and a 'quantity' key, and the 'quantity' must be greater than 0.
 	 *
 	 * @return bool True if the stock was consumed successfully for all the products. False if an empty note or office ID was provided, or if there was an error consuming the stock.
 	 */
@@ -207,15 +211,22 @@ class Bsale_API_Client {
 
 		$products_to_consume = array();
 
+		/*
+		 * In the sandbox environment, the use of the 'barcode' identifier is inconsistent: while it works for the stock retrieval as 'barcode', it doesn't work for
+		 * the stock consumption unless it's used as 'barCode' (case-sensitive).
+		 * TODO Check if this inconsistency is present in the production environment
+		 */
+		$product_identifier = 'barcode' === $this->product_identifier ? 'barCode' : 'code';
+
 		foreach ( $products as $product ) {
-			if ( '' === $product['code'] || 0 >= (int) $product['quantity'] ) {
+			if ( '' === $product['identifier'] || 0 >= (int) $product['quantity'] ) {
 				// It's all or nothing. If one product is invalid, we don't perform the stock consumption
 				return false;
 			}
 
 			$products_to_consume[] = array(
-				'quantity' => $product['quantity'],
-				'code'     => $product['code']
+				'quantity'          => $product['quantity'],
+				$product_identifier => $product['identifier']
 			);
 		}
 

@@ -120,7 +120,7 @@ class Stock_Settings {
 	public function settings_page_content(): void {
 		?>
 		<div class="wc-bsale-notice wc-bsale-notice-info">
-			<p><span class="dashicons dashicons-visibility"></span> For a product or variation to be synchronized with Bsale, it must have a SKU and the "Manage stock" option enabled. This plugin assumes that the SKU of a product or a variation in WooCommerce is the <code>code</code> field in Bsale.</p>
+			<p><span class="dashicons dashicons-visibility"></span> For a product or variation to be synchronized with Bsale, it must have a SKU and the "Manage stock" option enabled. Depending on the settings in the "Main" tab, the SKU of the product will be used to look for the <code>SKU (code)</code> or <code>barcode (barCode)</code> field in Bsale to match the products.</p>
 		</div>
 		<?php
 		add_settings_section(

@@ -198,7 +198,7 @@ class Stock implements API_Consumer {
 	private function update_stock_if_needed( string $event_trigger, Bsale_API_Client $bsale_api, \WC_Product $product ): void {
 		// Get the stock of the product in Bsale
 		try {
-			$bsale_stock = $bsale_api->get_stock_by_code( $product->get_sku(), $this->transversal_stock_settings['office_id'] );
+			$bsale_stock = $bsale_api->get_stock_by_identifier( $product->get_sku(), $this->transversal_stock_settings['office_id'] );
 		} catch ( \Exception $e ) {
 			$this->notify_observers( $event_trigger, 'stock_update', $product->get_sku(), $e->getMessage(), 'error' );
 

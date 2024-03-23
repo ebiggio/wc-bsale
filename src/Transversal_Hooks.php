@@ -174,8 +174,8 @@ class Transversal_Hooks implements API_Consumer {
 				}
 
 				$products_to_consume_stock[] = array(
-					'code'     => $product->get_sku(),
-					'quantity' => $item->get_quantity(),
+					'identifier' => $product->get_sku(),
+					'quantity'   => $item->get_quantity(),
 				);
 
 				$items_to_update_meta[] = $item;
@@ -200,7 +200,7 @@ class Transversal_Hooks implements API_Consumer {
 	 * Consumes stock of products in Bsale according to the quantity specified.
 	 *
 	 * @param int   $order_number              The order number. Will be used for the log message.
-	 * @param array $products_to_consume_stock An array of products to consume the stock from, with a 'code' and a 'quantity' key. The 'quantity' must be greater than 0.
+	 * @param array $products_to_consume_stock An array of products to consume the stock from, each with the product's SKU and the quantity to consume.
 	 *
 	 * @return bool True if the stock was consumed successfully for all the provided products. False if an empty office ID was provided, or if there was an error consuming the stock.
 	 */

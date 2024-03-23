@@ -17,6 +17,7 @@ defined( 'ABSPATH' ) || exit;
  * Settings_Manager class
  */
 class Settings_Manager {
+	private object|null $main_settings = null;
 	private object|null $cron_settings = null;
 
 	public function __construct() {
@@ -38,7 +39,9 @@ class Settings_Manager {
 	 * @return void
 	 */
 	public function init_settings(): void {
-		register_setting( 'wc_bsale_main_settings_group', 'wc_bsale_sandbox_access_token' );
+		$this->main_settings = new Settings\Main_Settings();
+		register_setting( 'wc_bsale_main_settings_group', 'wc_bsale_main', array( $this->main_settings, 'validate_settings' ) );
+
 		register_setting( 'wc_bsale_stock_settings_group', 'wc_bsale_admin_stock' );
 		register_setting( 'wc_bsale_stock_settings_group', 'wc_bsale_storefront_stock' );
 		register_setting( 'wc_bsale_stock_settings_group', 'wc_bsale_transversal_stock' );
@@ -65,12 +68,17 @@ class Settings_Manager {
 
 		global $settings_tabs;
 		$settings_tabs = array(
-			''      => 'Main settings',
-			'stock' => 'Stock synchronization',
-			'cron'  => 'Cron settings',
-			//'prices' => 'Prices synchronization',
-			//'orders' => 'Orders events',
+			'' => 'Main settings',
 		);
+
+		// Check if the API access token is set. We will only show the rest of the settings (tabs) if it's defined
+		if ( $this->main_settings->get_access_token() ) {
+			$settings_tabs = array(
+				''      => 'Main settings',
+				'stock' => 'Stock synchronization',
+				'cron'  => 'Cron settings'
+			);
+		}
 
 		// Include the view that contains the tabs for all the settings
 		include plugin_dir_path( __FILE__ ) . 'Settings/Views/Header.php';
@@ -86,7 +94,7 @@ class Settings_Manager {
 				$this->cron_settings->settings_page_content();
 				break;
 			default:
-				new Settings\Main_Settings();
+				$this->main_settings->settings_page_content();
 				break;
 		}
 

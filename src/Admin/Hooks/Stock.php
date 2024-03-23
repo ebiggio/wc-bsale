@@ -118,9 +118,9 @@ class Stock {
 					$sku = $variation->get_sku();
 
 					try {
-						$bsale_stock = $bsale_api->get_stock_by_code( $sku, $this->transversal_stock_settings['office_id'] );
+						$bsale_stock = $bsale_api->get_stock_by_identifier( $sku, $this->transversal_stock_settings['office_id'] );
 					} catch ( \Exception $e ) {
-						$message = sprintf( esc_html__( 'An error occurred while trying to fetch the stock of the variation "%s" from Bsale. Please try again later.', 'wc-bsale' ), $variation->get_sku() );
+						$message = sprintf( esc_html__( 'An error occurred while trying to fetch the stock of the variation [%s] from Bsale. Please try again later.', 'wc-bsale' ), $variation->get_sku() );
 						$this->show_admin_notice( $message, 'error' );
 
 						continue;
@@ -135,7 +135,7 @@ class Stock {
 
 			foreach ( $variations_to_sync as $variation_id => $variation ) {
 				if ( isset( $variations_synced[ $variation_id ] ) ) {
-					$message = sprintf( esc_html__( 'The stock of the variations "%s" has been synced with the stock in Bsale.', 'wc-bsale' ), $variation->get_sku() );
+					$message = sprintf( esc_html__( 'The stock of the variation [%s] has been synced with the stock in Bsale.', 'wc-bsale' ), $variation->get_sku() );
 					$this->show_admin_notice( $message, 'success' );
 
 					continue;
@@ -144,9 +144,9 @@ class Stock {
 				$sku = $variation->get_sku();
 
 				try {
-					$bsale_stock = $bsale_api->get_stock_by_code( $sku, $this->transversal_stock_settings['office_id'] );
+					$bsale_stock = $bsale_api->get_stock_by_identifier( $sku, $this->transversal_stock_settings['office_id'] );
 				} catch ( \Exception $e ) {
-					$message = sprintf( esc_html__( 'An error occurred while trying to fetch the stock of the variation "%s" from Bsale. Please try again later.', 'wc-bsale' ), $variation->get_sku() );
+					$message = sprintf( esc_html__( 'An error occurred while trying to fetch the stock of the variation [%s] from Bsale. Please try again later.', 'wc-bsale' ), $variation->get_sku() );
 					$this->show_admin_notice( $message, 'error' );
 
 					continue;
@@ -154,7 +154,7 @@ class Stock {
 
 				// If the variation has no stock in Bsale, we show a message to the user notifying them of this
 				if ( false === $bsale_stock ) {
-					$message = sprintf( esc_html__( 'No stock was found in Bsale for the code [%s]. Please check if this variation\'s SKU exists in Bsale, and has stock for the selected office.', 'wc-bsale' ), $sku );
+					$message = sprintf( esc_html__( 'No stock was found in Bsale for [%s]. Please check if this variation\'s SKU exists in Bsale, and has stock for the selected office.', 'wc-bsale' ), $sku );
 					$this->show_admin_notice( $message, 'warning' );
 
 					continue;
@@ -164,11 +164,11 @@ class Stock {
 				$wc_stock = (int) get_post_meta( $variation->get_id(), '_stock', true );
 
 				if ( $wc_stock === $bsale_stock ) {
-					$message = sprintf( esc_html__( 'The stock of the variation "%s" is the same as the stock in Bsale.', 'wc-bsale' ), $variation->get_sku() );
+					$message = sprintf( esc_html__( 'The stock of the variation [%s] is the same as the stock in Bsale.', 'wc-bsale' ), $variation->get_sku() );
 					$this->show_admin_notice( $message, 'success' );
 				} else {
 					add_action( 'admin_notices', function () use ( $wc_stock, $bsale_stock, $variation ) {
-						$message = sprintf( esc_html__( 'The stock of the variation "%s" [%s] is different than the stock in Bsale [%s]. Would you like to sync them?', 'wc-bsale' ), $variation->get_sku(), $wc_stock, $bsale_stock );
+						$message = sprintf( esc_html__( 'The stock of the variation [%s] (%s) is different than the stock in Bsale (%s). Would you like to sync them?', 'wc-bsale' ), $variation->get_sku(), $wc_stock, $bsale_stock );
 						?>
 						<div class="notice notice-warning is-dismissible">
 							<p><?php echo $message; ?></p>
@@ -213,9 +213,9 @@ class Stock {
 		$bsale_api = new Bsale_API_Client();
 
 		try {
-			$bsale_stock = $bsale_api->get_stock_by_code( $sku, $this->transversal_stock_settings['office_id'] );
+			$bsale_stock = $bsale_api->get_stock_by_identifier( $sku, $this->transversal_stock_settings['office_id'] );
 		} catch ( \Exception $e ) {
-			$message = sprintf( esc_html__( 'An error occurred while trying to fetch the stock of the product "%s" from Bsale. Please try again later.', 'wc-bsale' ), $sku );
+			$message = sprintf( esc_html__( 'An error occurred while trying to fetch the stock of the product [%s] from Bsale. Please try again later.', 'wc-bsale' ), $sku );
 			$this->show_admin_notice( $message, 'error' );
 
 			return;
@@ -223,7 +223,7 @@ class Stock {
 
 		// If the product has no stock in Bsale, we show a message to the user notifying them of this
 		if ( false === $bsale_stock ) {
-			$message = sprintf( esc_html__( 'No stock was found in Bsale for the code [%s]. Please check if this product\'s SKU exists in Bsale, and has stock for the selected office.', 'wc-bsale' ), $sku );
+			$message = sprintf( esc_html__( 'No stock was found in Bsale for [%s]. Please check if this product\'s SKU exists in Bsale, and has stock for the selected office.', 'wc-bsale' ), $sku );
 			$this->show_admin_notice( $message, 'warning' );
 
 			return;
@@ -247,7 +247,7 @@ class Stock {
 		}
 
 		add_action( 'admin_notices', function () use ( $wc_stock, $bsale_stock ) {
-			$message = esc_html__( 'The stock of this product [%s] is different than the stock in Bsale [%s]. Would you like to sync them?', 'wc-bsale' );
+			$message = esc_html__( 'The stock of this product (%s) is different than the stock in Bsale (%s). Would you like to sync them?', 'wc-bsale' );
 			?>
 			<div class="notice notice-warning is-dismissible">
 				<p><?php echo sprintf( $message, $wc_stock, $bsale_stock ); ?></p>
