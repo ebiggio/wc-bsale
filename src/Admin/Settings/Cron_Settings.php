@@ -16,7 +16,7 @@ defined( 'ABSPATH' ) || exit;
  * Cron_Settings class
  */
 class Cron_Settings {
-	private mixed $settings;
+	private array|bool $settings;
 	private array $valid_cron_times = array(
 		'0000' => '00:00',
 		'0100' => '01:00',
@@ -84,7 +84,7 @@ class Cron_Settings {
 	 */
 	public function validate_cron_settings(): array {
 		if ( ! current_user_can( 'manage_options' ) ) {
-			add_settings_error( 'wc_bsale_messages', 'wc_bsale_message', 'Insufficient permissions' );
+			add_settings_error( 'wc_bsale_messages', 'wc_bsale_message', __('You do not have sufficient permissions to access this page.', 'wc-bsale') );
 
 			return array();
 		}
