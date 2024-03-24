@@ -84,12 +84,12 @@ class Bsale_API_Client {
 	/**
 	 * Retrieves the last **successful** response from Bsale.
 	 *
-	 * @param bool $only_body If true, will return only the body of the response. Defaults to false.
+	 * @param bool $body_only If true, will return only the body of the response. Defaults to false.
 	 *
 	 * @return array|null The last successful response from Bsale, or null if no request was made or if the last request was not successful.
 	 */
-	public function get_last_response( bool $only_body = false ): array|null {
-		if ( $only_body ) {
+	public function get_last_response( bool $body_only = false ): array|null {
+		if ( $body_only ) {
 			return json_decode( wp_remote_retrieve_body( $this->bsale_response ) );
 		}
 
