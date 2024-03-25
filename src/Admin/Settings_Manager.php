@@ -81,8 +81,8 @@ class Settings_Manager {
 			$current_tab = 'main';
 		}
 
-		// Include the view that contains the tabs for all the settings
-		include plugin_dir_path( __FILE__ ) . 'Settings/Views/Header.php';
+		// Display the settings page header
+		new Settings\Views\Header( $this->settings_classes_map, $current_tab );
 
 		if ( array_key_exists( $current_tab, $this->settings_classes_map ) ) {
 			$this->settings_classes_map[ $current_tab ]->display_settings_page();
@@ -91,10 +91,7 @@ class Settings_Manager {
 			$this->settings_classes_map['main']->display_settings_page();
 		}
 
-		// Submit button for the form
-		submit_button();
-		// Close HTML elements of the view
-		echo '</form>';
-		echo '</div>';
+		// Display the settings page footer
+		new Settings\Views\Footer();
 	}
 }

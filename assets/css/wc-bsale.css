@@ -56,3 +56,10 @@
 .wp-list-table .column-message {
     width: 40%;
 }
+
+.wc-bsale-footer {
+margin-top: 20px;
+    padding: 10px;
+    background-color: #e7e7e7;
+    border-top: 1px solid #c3c4c7;
+}
