@@ -3,7 +3,7 @@
 Plugin Name: WooCommerce Bsale Integration
 Plugin URI: https://github.com/ebiggio/wc-bsale
 Description: WooCommerce plugin to integrate with the Bsale system, allowing you to sync product stocks, prices and generate electronic invoices.
-Version: 0.3.0
+Version: 0.4.0
 Author: Enzo Biggio
 Author URI: https://github.com/ebiggio/wc-bsale
 License: GPL3
@@ -23,7 +23,7 @@ if ( ! in_array( 'wc-bsale/wc-bsale.php', apply_filters( 'active_plugins', get_o
 	return;
 }
 
-const PLUGIN_VERSION = '0.3.0';
+const PLUGIN_VERSION = '0.4.0';
 const PLUGIN_DIR     = __DIR__;
 define( "WC_Bsale\PLUGIN_URL", plugin_dir_url( __FILE__ ) );
 

@@ -8,9 +8,9 @@
 
 namespace WC_Bsale;
 
-use WC_Bsale\Interfaces\Observer;
-
 defined( 'ABSPATH' ) || exit;
+
+use WC_Bsale\Interfaces\Observer;
 
 /**
  * DB_Logger class
