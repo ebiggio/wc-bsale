@@ -41,6 +41,8 @@ class Bsale_API_Client {
 	private function make_request( string $endpoint, string $method = 'GET', array $body = null ): mixed {
 		// Check if the access token is set and throw an exception if it's not
 		if ( '' === $this->access_token ) {
+			$this->bsale_wp_error = new \WP_Error( 422, 'The Bsale API access token is not set.' );
+
 			throw new \Exception( 'The Bsale API access token is not set.' );
 		}
 
