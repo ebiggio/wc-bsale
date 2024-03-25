@@ -47,7 +47,7 @@ class Admin_Init {
 			'WooCommerce Bsale',
 			'manage_options',
 			'wc-bsale-settings',
-			array( $this->settings_manager, 'settings_page_content' ),
+			array( $this->settings_manager, 'display_settings' ),
 			PLUGIN_URL . 'assets/images/bsale_icon_bw.png' );
 
 		add_submenu_page(
@@ -56,7 +56,7 @@ class Admin_Init {
 			'Settings',
 			'manage_options',
 			'wc-bsale-settings',
-			array( $this->settings_manager, 'settings_page_content' ) );
+			array( $this->settings_manager, 'display_settings' ) );
 
 		add_submenu_page(
 			'wc-bsale-settings',
