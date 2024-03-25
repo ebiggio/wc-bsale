@@ -8,17 +8,16 @@
 
 namespace WC_Bsale\Admin;
 
+defined( 'ABSPATH' ) || exit;
+
 use const WC_Bsale\PLUGIN_URL;
 use const WC_Bsale\PLUGIN_VERSION;
-
-defined( 'ABSPATH' ) || exit;
 
 /**
  * Settings_Manager class
  */
 class Settings_Manager {
-	private object|null $main_settings = null;
-	private object|null $cron_settings = null;
+	private array $settings_classes_map = array();
 
 	public function __construct() {
 		add_action( 'admin_init', array( $this, 'init_settings' ) );
@@ -39,15 +38,20 @@ class Settings_Manager {
 	 * @return void
 	 */
 	public function init_settings(): void {
-		$this->main_settings = new Settings\Main_Settings();
-		register_setting( 'wc_bsale_main_settings_group', 'wc_bsale_main', array( $this->main_settings, 'validate_settings' ) );
+		$this->settings_classes_map = array(
+			'main'    => new Settings\Main_Settings(),
+			'stock'   => new Settings\Stock_Settings(),
+			'invoice' => new Settings\Invoice_Settings(),
+			'cron'    => new Settings\Cron_Settings()
+		);
 
-		register_setting( 'wc_bsale_stock_settings_group', 'wc_bsale_admin_stock' );
-		register_setting( 'wc_bsale_stock_settings_group', 'wc_bsale_storefront_stock' );
-		register_setting( 'wc_bsale_stock_settings_group', 'wc_bsale_transversal_stock' );
+		register_setting( 'wc_bsale_main_settings_group', 'wc_bsale_main', array( $this->settings_classes_map['main'], 'validate_settings' ) );
 
-		$this->cron_settings = new Settings\Cron_Settings();
-		register_setting( 'wc_bsale_cron_settings_group', 'wc_bsale_cron', array( $this->cron_settings, 'validate_cron_settings' ) );
+		register_setting( 'wc_bsale_stock_settings_group', 'wc_bsale_stock', array( $this->settings_classes_map['stock'], 'validate_settings' ) );
+
+		register_setting( 'wc_bsale_invoice_settings_group', 'wc_bsale_invoice', array( $this->settings_classes_map['invoice'], 'validate_settings' ) );
+
+		register_setting( 'wc_bsale_cron_settings_group', 'wc_bsale_cron', array( $this->settings_classes_map['cron'], 'validate_settings' ) );
 	}
 
 	/**
@@ -55,7 +59,7 @@ class Settings_Manager {
 	 *
 	 * @return void
 	 */
-	public function settings_page_content(): void {
+	public function display_settings(): void {
 		// Check if the user has the necessary permissions to access the settings
 		if ( ! current_user_can( 'manage_options' ) ) {
 			return;
@@ -66,36 +70,25 @@ class Settings_Manager {
 			add_settings_error( 'wc_bsale_messages', 'wc_bsale_message', 'Settings saved', 'updated' );
 		}
 
-		global $settings_tabs;
-		$settings_tabs = array(
-			'' => 'Main settings',
-		);
+		$current_tab = $_GET['tab'] ?? 'main'; // Fallback to 'main' if 'tab' is not set
 
-		// Check if the API access token is set. We will only show the rest of the settings (tabs) if it's defined
-		if ( $this->main_settings->get_access_token() ) {
-			$settings_tabs = array(
-				''      => 'Main settings',
-				'stock' => 'Stock synchronization',
-				'cron'  => 'Cron settings'
-			);
+		// Check if the API access token is set and redirect to the main settings if trying to access another tab
+		if ( ! $this->settings_classes_map['main']->get_access_token() && 'main' !== $current_tab ) {
+			// Show a warning message if the API access token is not set
+			add_settings_error( 'wc_bsale_messages', 'wc_bsale_message', 'The Bsale API access token is required.' );
+
+			// "Redirect" to the main settings page
+			$current_tab = 'main';
 		}
 
 		// Include the view that contains the tabs for all the settings
 		include plugin_dir_path( __FILE__ ) . 'Settings/Views/Header.php';
 
-		// Include classes according to the selected tab
-		$tab = $_GET['tab'] ?? '';
-
-		switch ( $tab ) {
-			case 'stock':
-				new Settings\Stock_Settings();
-				break;
-			case 'cron':
-				$this->cron_settings->settings_page_content();
-				break;
-			default:
-				$this->main_settings->settings_page_content();
-				break;
+		if ( array_key_exists( $current_tab, $this->settings_classes_map ) ) {
+			$this->settings_classes_map[ $current_tab ]->display_settings_page();
+		} else {
+			// Handle the case where $current_tab does not match any known option
+			$this->settings_classes_map['main']->display_settings_page();
 		}
 
 		// Submit button for the form
