@@ -8,14 +8,16 @@
 
 namespace WC_Bsale\Admin\Settings;
 
-use const WC_Bsale\PLUGIN_URL;
-
 defined( 'ABSPATH' ) || exit;
+
+use WC_Bsale\Interfaces\Setting as Setting_Interface;
+
+use const WC_Bsale\PLUGIN_URL;
 
 /**
  * Cron_Settings class
  */
-class Cron_Settings {
+class Cron_Settings implements Setting_Interface {
 	private array|bool $settings;
 	private array $valid_cron_times = array(
 		'0000' => '00:00',
@@ -82,7 +84,7 @@ class Cron_Settings {
 	 *
 	 * @return array
 	 */
-	public function validate_cron_settings(): array {
+	public function validate_settings(): array {
 		if ( ! current_user_can( 'manage_options' ) ) {
 			add_settings_error( 'wc_bsale_messages', 'wc_bsale_message', __('You do not have sufficient permissions to access this page.', 'wc-bsale') );
 
@@ -156,6 +158,15 @@ class Cron_Settings {
 	}
 
 	/**
+	 * Returns the title of the settings page.
+	 *
+	 * @return string
+	 */
+	public function get_setting_title(): string {
+		return __('Cron settings', 'wc-bsale');
+	}
+
+	/**
 	 * Loads WooCommerce products and excluded products from the settings.
 	 *
 	 * If the settings have products selected, we load them and store them in the $products property, using their IDs. The same goes for the excluded products, which are stored in the $excluded_products property.
@@ -196,7 +207,7 @@ class Cron_Settings {
 	 *
 	 * @return void
 	 */
-	public function settings_page_content(): void {
+	public function display_settings_page(): void {
 		$this->load_wc_products();
 		$this->load_page_resources();
 
