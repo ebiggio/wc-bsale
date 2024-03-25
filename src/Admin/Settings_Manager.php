@@ -59,7 +59,7 @@ class Settings_Manager {
 	 *
 	 * @return void
 	 */
-	public function display_settings(): void {
+	public function display_settings_page(): void {
 		// Check if the user has the necessary permissions to access the settings
 		if ( ! current_user_can( 'manage_options' ) ) {
 			return;
@@ -85,10 +85,10 @@ class Settings_Manager {
 		new Settings\Views\Header( $this->settings_classes_map, $current_tab );
 
 		if ( array_key_exists( $current_tab, $this->settings_classes_map ) ) {
-			$this->settings_classes_map[ $current_tab ]->display_settings_page();
+			$this->settings_classes_map[ $current_tab ]->display_settings();
 		} else {
 			// Handle the case where $current_tab does not match any known option
-			$this->settings_classes_map['main']->display_settings_page();
+			$this->settings_classes_map['main']->display_settings();
 		}
 
 		// Display the settings page footer

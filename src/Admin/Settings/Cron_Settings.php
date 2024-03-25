@@ -207,7 +207,7 @@ class Cron_Settings implements Setting_Interface {
 	 *
 	 * @return void
 	 */
-	public function display_settings_page(): void {
+	public function display_settings(): void {
 		$this->load_wc_products();
 		$this->load_page_resources();
 

@@ -180,7 +180,7 @@ class Stock_Settings implements Setting_Interface {
 	 *
 	 * @return void
 	 */
-	public function display_settings_page(): void {
+	public function display_settings(): void {
 		$this->load_page_resources();
 		$this->load_bsale_office();
 

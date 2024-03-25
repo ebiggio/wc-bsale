@@ -33,5 +33,5 @@ interface Setting {
 	 *
 	 * @return void
 	 */
-	public function display_settings_page(): void;
+	public function display_settings(): void;
 }

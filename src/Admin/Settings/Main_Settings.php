@@ -74,7 +74,7 @@ class Main_Settings implements Setting_Interface {
 	 *
 	 * @return void
 	 */
-	public function display_settings_page(): void {
+	public function display_settings(): void {
 		add_settings_section(
 			'wc_bsale_main_section',
 			'Bsale API configuration',
