@@ -8,6 +8,9 @@
 
 namespace WC_Bsale\Interfaces;
 
+/**
+ * API_Consumer interface
+ */
 interface API_Consumer {
 	/**
 	 * Adds an observer to the list of observers.

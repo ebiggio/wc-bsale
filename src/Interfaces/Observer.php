@@ -8,6 +8,9 @@
 
 namespace WC_Bsale\Interfaces;
 
+/**
+ * Observer interface
+ */
 interface Observer {
 	/**
 	 * Updates the observer with details about an operation.
