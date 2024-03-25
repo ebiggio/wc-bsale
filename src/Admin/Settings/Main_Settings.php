@@ -10,10 +10,12 @@ namespace WC_Bsale\Admin\Settings;
 
 defined( 'ABSPATH' ) || exit;
 
+use WC_Bsale\Interfaces\Setting as Setting_Interface;
+
 /**
  * Main_Settings class
  */
-class Main_Settings {
+class Main_Settings implements Setting_Interface {
 	private array|bool $settings = array();
 
 	public function __construct() {
@@ -59,11 +61,20 @@ class Main_Settings {
 	}
 
 	/**
+	 * Returns the title of the settings page.
+	 *
+	 * @return string
+	 */
+	public function get_setting_title(): string {
+		return __('Main settings', 'wc-bsale');
+	}
+
+	/**
 	 * Displays the main settings page.
 	 *
 	 * @return void
 	 */
-	public function settings_page_content(): void {
+	public function display_settings_page(): void {
 		add_settings_section(
 			'wc_bsale_main_section',
 			'Bsale API configuration',
