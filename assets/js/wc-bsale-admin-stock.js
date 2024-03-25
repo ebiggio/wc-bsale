@@ -1,12 +1,12 @@
 function updateAutoCheckboxStatus() {
-    document.getElementById('wc_bsale_admin_stock_auto_update').disabled = !document.getElementById('wc_bsale_admin_stock_edit').checked;
+    document.getElementById('wc_bsale_admin_auto_update').disabled = !document.getElementById('wc_bsale_admin_edit').checked;
 }
 
-document.getElementById('wc_bsale_admin_stock_edit').addEventListener('change', updateAutoCheckboxStatus);
+document.getElementById('wc_bsale_admin_edit').addEventListener('change', updateAutoCheckboxStatus);
 document.addEventListener('DOMContentLoaded', updateAutoCheckboxStatus);
 
 jQuery(document).ready(function ($) {
-    $('#wc_bsale_transversal_stock_office_id').select2({
+    $('#wc_bsale_transversal_office_id').select2({
         placeholder: bsale_offices.select2_placeholder,
         minimumInputLength: 2,
         allowClear: true,
