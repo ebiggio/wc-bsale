@@ -8,9 +8,9 @@
 
 namespace WC_Bsale\Admin\Hooks;
 
-use WC_Bsale\Bsale_API_Client;
-
 defined( 'ABSPATH' ) || exit;
+
+use WC_Bsale\Bsale_API_Client;
 
 /**
  * Stock class
@@ -18,22 +18,28 @@ defined( 'ABSPATH' ) || exit;
  * This class doesn't implement the API_Consumer interface, since the results of the operations are shown directly to the user in the admin through notices.
  */
 class Stock {
-	private mixed $admin_stock_settings;
-	private mixed $transversal_stock_settings;
+	private int $office_id;
+	private array|false $admin_stock_settings;
 
 	public function __construct() {
-		$this->admin_stock_settings       = maybe_unserialize( get_option( 'wc_bsale_admin_stock' ) );
-		$this->transversal_stock_settings = maybe_unserialize( get_option( 'wc_bsale_transversal_stock' ) );
+		$stock_settings = maybe_unserialize( get_option( 'wc_bsale_stock' ) );
 
-		// Check if the office ID is set. If not, we don't need to add the hooks
-		$office_id = $this->transversal_stock_settings['office_id'] ?? 0;
-
-		if ( ! $office_id ) {
+		// If there are no stock settings, we don't need to add the hooks
+		if ( ! $stock_settings ) {
 			return;
 		}
 
-		// Check if any of the stock settings for the admin side are enabled. If not, we don't need to add the hooks
-		if ( ! $this->admin_stock_settings ) {
+		// Check if the office ID is set. If not, we don't need to add the hooks
+		if ( ! $stock_settings['office_id'] ) {
+			return;
+		}
+
+		$this->office_id = (int) $stock_settings['office_id'];
+
+		$this->admin_stock_settings = $stock_settings['admin'];
+
+		// Check if the "edit" setting is enabled. If not, we don't need to add the hooks (since the setting "auto_update" depends on this one)
+		if ( ! $this->admin_stock_settings['edit'] ) {
 			return;
 		}
 
@@ -111,14 +117,14 @@ class Stock {
 			$bsale_api = new Bsale_API_Client();
 
 			// If the user has clicked the "Sync Stock" button or the settings to sync automatically is enabled, we update the stock of the variations with the stock in Bsale
-			if ( isset( $_POST['wc_bsale_sync_stock'] ) || isset( $this->admin_stock_settings['auto_update'] ) ) {
+			if ( isset( $_POST['wc_bsale_sync_stock'] ) || $this->admin_stock_settings['auto_update'] ) {
 				$variations_synced = array();
 
 				foreach ( $variations_to_sync as $variation_id => $variation ) {
 					$sku = $variation->get_sku();
 
 					try {
-						$bsale_stock = $bsale_api->get_stock_by_identifier( $sku, $this->transversal_stock_settings['office_id'] );
+						$bsale_stock = $bsale_api->get_stock_by_identifier( $sku, $this->office_id );
 					} catch ( \Exception $e ) {
 						$message = sprintf( esc_html__( 'An error occurred while trying to fetch the stock of the variation [%s] from Bsale. Please try again later.', 'wc-bsale' ), $variation->get_sku() );
 						$this->show_admin_notice( $message, 'error' );
@@ -144,7 +150,7 @@ class Stock {
 				$sku = $variation->get_sku();
 
 				try {
-					$bsale_stock = $bsale_api->get_stock_by_identifier( $sku, $this->transversal_stock_settings['office_id'] );
+					$bsale_stock = $bsale_api->get_stock_by_identifier( $sku, $this->office_id );
 				} catch ( \Exception $e ) {
 					$message = sprintf( esc_html__( 'An error occurred while trying to fetch the stock of the variation [%s] from Bsale. Please try again later.', 'wc-bsale' ), $variation->get_sku() );
 					$this->show_admin_notice( $message, 'error' );
@@ -213,7 +219,7 @@ class Stock {
 		$bsale_api = new Bsale_API_Client();
 
 		try {
-			$bsale_stock = $bsale_api->get_stock_by_identifier( $sku, $this->transversal_stock_settings['office_id'] );
+			$bsale_stock = $bsale_api->get_stock_by_identifier( $sku, $this->office_id );
 		} catch ( \Exception $e ) {
 			$message = sprintf( esc_html__( 'An error occurred while trying to fetch the stock of the product [%s] from Bsale. Please try again later.', 'wc-bsale' ), $sku );
 			$this->show_admin_notice( $message, 'error' );
@@ -237,7 +243,7 @@ class Stock {
 		}
 
 		// If the user has clicked the "Sync Stock" button or the settings to sync automatically is enabled, we update the product's stock with the stock in Bsale
-		if ( isset( $_POST['wc_bsale_sync_stock'] ) || isset( $this->admin_stock_settings['auto_update'] ) ) {
+		if ( isset( $_POST['wc_bsale_sync_stock'] ) || $this->admin_stock_settings['auto_update'] ) {
 			wc_update_product_stock( $product, $bsale_stock );
 
 			$message = esc_html__( 'The stock of this product has been synced with the stock in Bsale.', 'wc-bsale' );

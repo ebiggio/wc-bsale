@@ -8,20 +8,20 @@
 
 namespace WC_Bsale;
 
+defined( 'ABSPATH' ) || exit;
+
 use WC_Bsale\Interfaces\API_Consumer;
 use WC_Bsale\Interfaces\Observer;
-
-defined( 'ABSPATH' ) || exit;
 
 /**
  * Transversal_Hooks class
  */
 class Transversal_Hooks implements API_Consumer {
-	private array $transversal_options = array();
+	private array $transversal_settings = array();
 	private array $observers = array();
 
 	public function __construct() {
-		$this->transversal_options = $this->get_transversal_options();
+		$this->transversal_settings = $this->get_transversal_settings();
 
 		// Add the hooks after WooCommerce is loaded
 		add_action( 'woocommerce_loaded', array( $this, 'init_hooks' ) );
@@ -75,18 +75,36 @@ class Transversal_Hooks implements API_Consumer {
 	}
 
 	/**
-	 * Gets the plugin options that govern traversal hooks.
+	 * Gets the plugin settings that govern traversal hooks.
 	 *
 	 * @return array[]
 	 */
-	private function get_transversal_options(): array {
-		$transversal_stock_options = maybe_unserialize( get_option( 'wc_bsale_transversal_stock' ) );
+	private function get_transversal_settings(): array {
+		$stock_settings = maybe_unserialize( get_option( 'wc_bsale_stock' ) );
+
+		$default_stock_settings = array(
+			'stock' =>
+				array(
+					'office_id'    => 0,
+					'order_event'  => '',
+					'order_status' => array(),
+					'note'         => ''
+				),
+		);
+
+		if ( ! $stock_settings ) {
+			return $default_stock_settings;
+		}
+
+		$transversal_stock_settings = $stock_settings['transversal'] ?? $default_stock_settings;
 
 		return array(
 			'stock' =>
 				array(
-					'order'     => $transversal_stock_options,
-					'office_id' => $transversal_stock_options['office_id'] ?? 0,
+					'office_id'    => (int) $stock_settings['office_id'],
+					'order_event'  => $transversal_stock_settings['order_event'],
+					'order_status' => maybe_unserialize( $transversal_stock_settings['order_status'] ) ?? array(),
+					'note'         => $transversal_stock_settings['note']
 				),
 		);
 	}
@@ -98,19 +116,18 @@ class Transversal_Hooks implements API_Consumer {
 	 */
 	private function stock_hooks(): void {
 		// The stock hooks dependes of an office being set to use it when consuming the stock
-		if ( ! (int) $this->transversal_options['stock']['office_id'] ) {
+		if ( ! $this->transversal_settings['stock']['office_id'] ) {
 			return;
 		}
 
-		$order_event = $this->transversal_options['stock']['order']['order_event'];
+		if ( 'wc' === $this->transversal_settings['stock']['order_event'] ) {
+			// wc = WooCommerce. Meaning that the stock must be consumed when WooCommerce reduces the stock
 
-		// wc = WooCommerce. Meaning that the stock must be consumed when WooCommerce reduces the stock
-		if ( 'wc' === $order_event ) {
 			// This sends the order object to the callback function
 			add_action( 'woocommerce_reduce_order_stock', array( $this, 'check_order_for_stock_consumption' ) );
 		} else {
 			// The $order_event is set to "custom", so we hook to each defined order status to consume the stock when an order reaches that status
-			$order_status = maybe_unserialize( $this->transversal_options['stock']['order']['order_status'] );
+			$order_status = $this->transversal_settings['stock']['order_status'];
 
 			foreach ( $order_status as $status ) {
 				if ( wc_is_order_status( $status ) ) {
@@ -205,9 +222,9 @@ class Transversal_Hooks implements API_Consumer {
 	 * @return bool True if the stock was consumed successfully for all the provided products. False if an empty office ID was provided, or if there was an error consuming the stock.
 	 */
 	private function consume_bsale_stock( int $order_number, array $products_to_consume_stock ): bool {
-		$office_id = (int) $this->transversal_options['stock']['office_id'];
+		$office_id = $this->transversal_settings['stock']['office_id'];
 
-		$note           = strip_tags( $this->transversal_options['stock']['order']['note'] );
+		$note           = strip_tags( $this->transversal_settings['stock']['note'] );
 		$formatted_note = str_replace( array( '{1}', '{2}', "\r", "\n" ), array( get_bloginfo( 'name' ), $order_number, '', '' ), $note );
 
 		$bsale_api_client     = new Bsale_API_Client();

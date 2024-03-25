@@ -8,12 +8,12 @@
 
 namespace WC_Bsale\Storefront\Hooks;
 
+defined( 'ABSPATH' ) || exit;
+
 use WC_Bsale\Bsale_API_Client;
 use WC_Bsale\DB_Logger;
 use WC_Bsale\Interfaces\API_Consumer;
 use WC_Bsale\Interfaces\Observer;
-
-defined( 'ABSPATH' ) || exit;
 
 /**
  * Stock class
@@ -22,31 +22,37 @@ defined( 'ABSPATH' ) || exit;
  * For now, it only has the observer for the database logger, but it could have more in the future.
  */
 class Stock implements API_Consumer {
+	private int $office_id;
 	private mixed $storefront_stock_settings;
-	private mixed $transversal_stock_settings;
 	private array $observers = array();
 
 	public function __construct() {
-		$this->storefront_stock_settings  = maybe_unserialize( get_option( 'wc_bsale_storefront_stock' ) );
-		$this->transversal_stock_settings = maybe_unserialize( get_option( 'wc_bsale_transversal_stock' ) );
+		$stock_settings = maybe_unserialize( get_option( 'wc_bsale_stock' ) );
 
-		// Check if any of the stock settings for the storefront side are enabled. If not, we don't need to add the hooks
-		if ( ! $this->storefront_stock_settings ) {
+		// If there are no stock settings, we don't need to add the hooks
+		if ( ! $stock_settings ) {
 			return;
 		}
 
 		// Check if the office ID is set. If not, we don't need to add the hooks
-		$office_id = $this->transversal_stock_settings['office_id'] ?? 0;
-
-		if ( ! $office_id ) {
+		if ( ! $stock_settings['office_id'] ) {
 			return;
 		}
 
-		if ( isset( $this->storefront_stock_settings['cart'] ) ) {
+		$this->office_id = (int) $stock_settings['office_id'];
+
+		$this->storefront_stock_settings = $stock_settings['storefront'];
+
+		// Check if any of the stock settings for the storefront side are enabled. If not, we don't need to add the hooks
+		if ( ! $this->storefront_stock_settings['cart'] && ! $this->storefront_stock_settings['checkout'] ) {
+			return;
+		}
+
+		if ( $this->storefront_stock_settings['cart'] ) {
 			add_action( 'woocommerce_add_to_cart', array( $this, 'add_to_cart' ), 10, 4 );
 		}
 
-		if ( isset( $this->storefront_stock_settings['checkout'] ) ) {
+		if ( $this->storefront_stock_settings['checkout'] ) {
 			add_action( 'woocommerce_check_cart_items', array( $this, 'check_cart_items_checkout' ) );
 		}
 
@@ -198,7 +204,7 @@ class Stock implements API_Consumer {
 	private function update_stock_if_needed( string $event_trigger, Bsale_API_Client $bsale_api, \WC_Product $product ): void {
 		// Get the stock of the product in Bsale
 		try {
-			$bsale_stock = $bsale_api->get_stock_by_identifier( $product->get_sku(), $this->transversal_stock_settings['office_id'] );
+			$bsale_stock = $bsale_api->get_stock_by_identifier( $product->get_sku(), $this->office_id );
 		} catch ( \Exception $e ) {
 			$this->notify_observers( $event_trigger, 'stock_update', $product->get_sku(), $e->getMessage(), 'error' );
 
