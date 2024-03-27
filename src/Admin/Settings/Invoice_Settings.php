@@ -10,13 +10,16 @@ namespace WC_Bsale\Admin\Settings;
 
 defined( 'ABSPATH' ) || exit;
 
+use WC_Bsale\Bsale\API_Client;
 use WC_Bsale\Interfaces\Setting as Setting_Interface;
+use const WC_Bsale\PLUGIN_URL;
 
 /**
  * Class Invoice_Settings
  */
 class Invoice_Settings implements Setting_Interface {
 	private array|bool $settings = false;
+	private array|null $selected_document_type = null;
 	private array|null $selected_office = null;
 	private array|null $selected_price_list = null;
 
@@ -27,8 +30,8 @@ class Invoice_Settings implements Setting_Interface {
 		if ( ! $this->settings ) {
 			$this->settings = array(
 				'enabled'       => 0,
-				'document_type' => 0,
 				'order_status'  => 'wc-completed',
+				'document_type' => 0,
 				'office_id'     => 0,
 				'price_list_id' => 0,
 				'declare_sii'   => 0
@@ -53,8 +56,8 @@ class Invoice_Settings implements Setting_Interface {
 		$selected_order_status = isset( $_POST['wc_bsale_invoice']['order_status'] ) ? sanitize_text_field( $_POST['wc_bsale_invoice']['order_status'] ) : 'wc-completed';
 
 		$settings['enabled']       = isset( $_POST['wc_bsale_invoice']['enabled'] ) ? 1 : 0;
-		$settings['document_type'] = (int) $_POST['wc_bsale_invoice']['document_type'];
 		$settings['order_status']  = array_key_exists( $selected_order_status, $order_statuses ) ? $selected_order_status : 'wc-completed';
+		$settings['document_type'] = (int) $_POST['wc_bsale_invoice']['document_type'];
 		$settings['office_id']     = (int) $_POST['wc_bsale_invoice']['office_id'];
 		$settings['price_list_id'] = (int) $_POST['wc_bsale_invoice']['price_list_id'];
 		$settings['declare_sii']   = isset( $_POST['wc_bsale_invoice']['declare_sii'] ) ? 1 : 0;
@@ -72,11 +75,93 @@ class Invoice_Settings implements Setting_Interface {
 	}
 
 	/**
+	 * Loads the resources needed for the invoice settings page (styles and scripts).
+	 *
+	 * @return void
+	 */
+	private function load_page_resources(): void {
+		// Enqueue WooCommerce's admin styles and the product editor styles for Select2
+		wp_enqueue_style( 'woocommerce_admin_styles', WC()->plugin_url() . '/assets/css/admin.css' );
+		wp_enqueue_style( 'woocommerce_product_editor_styles', WC()->plugin_url() . '/assets/client/admin/product-editor/style.css' );
+
+		// WooCommerce JS script for Select2
+		wp_enqueue_script( 'wc-enhanced-select' );
+
+		// Enqueue the JavaScript file for the office selection and localize the script with the URL for the AJAX request
+		wp_enqueue_script( 'wc-bsale-admin-invoice', PLUGIN_URL . 'assets/js/wc-bsale-admin-invoice.js', array( 'jquery' ), null, true );
+		wp_localize_script( 'wc-bsale-admin-invoice', 'invoice_parameters', array(
+			'ajax_url' => admin_url( 'admin-ajax.php' ),
+			'nonce'    => wp_create_nonce( 'search_bsale_data' )
+		) );
+	}
+
+	/**
+	 * Loads a Bsale entity from the API.
+	 *
+	 * @param int    $entity_id  The ID of the entity to load.
+	 * @param string $api_method The method to call in the Bsale API client.
+	 *
+	 * @return array The entity data. If the entity is not found, an empty array is returned.
+	 */
+	private function load_bsale_entity( int $entity_id, string $api_method ): array {
+		if ( $entity_id ) {
+			$bsale_api_client = new API_Client();
+
+			try {
+				$entity = $bsale_api_client->$api_method( $entity_id );
+			} catch ( \Exception $e ) {
+				$entity = null;
+			}
+
+			if ( $entity ) {
+				return array(
+					'id'   => $entity['id'],
+					'text' => $entity['name']
+				);
+			}
+		}
+
+		return array();
+	}
+
+	/**
+	 * Gets the document type data from Bsale for the document type ID stored in the settings.
+	 *
+	 * @return void
+	 */
+	private function load_bsale_document_type(): void {
+		$this->selected_document_type = $this->load_bsale_entity( (int) $this->settings['document_type'], 'get_document_type_by_id' );
+	}
+
+	/**
+	 * Gets the office data from Bsale for the office ID stored in the settings.
+	 *
+	 * @return void
+	 */
+	private function load_bsale_office(): void {
+		$this->selected_office = $this->load_bsale_entity( (int) $this->settings['office_id'], 'get_office_by_id' );
+	}
+
+	/**
+	 * Gets the price list data from Bsale for the price list ID stored in the settings.
+	 *
+	 * @return void
+	 */
+	private function load_bsale_price_list(): void {
+		$this->selected_price_list = $this->load_bsale_entity( (int) $this->settings['price_list_id'], 'get_price_list_by_id' );
+	}
+
+	/**
 	 * Displays the invoice settings page.
 	 *
 	 * @return void
 	 */
 	public function display_settings(): void {
+		$this->load_page_resources();
+		$this->load_bsale_document_type();
+		$this->load_bsale_office();
+		$this->load_bsale_price_list();
+
 		add_settings_section(
 			'wc_bsale_invoice_section',
 			__( 'Invoice settings', 'wc-bsale' ),
@@ -93,17 +178,17 @@ class Invoice_Settings implements Setting_Interface {
 		);
 
 		add_settings_field(
-			'wc_bsale_document_type',
-			__( 'Document type for the invoice', 'wc-bsale' ),
-			array( $this, 'document_type_callback' ),
+			'wc_bsale_invoice_order_status',
+			__( 'Generate invoice when the order status changes to', 'wc-bsale' ),
+			array( $this, 'order_status_callback' ),
 			'wc_bsale_invoice',
 			'wc_bsale_invoice_section'
 		);
 
 		add_settings_field(
-			'wc_bsale_invoice_order_status',
-			__( 'Generate invoice when the order status changes to', 'wc-bsale' ),
-			array( $this, 'order_status_callback' ),
+			'wc_bsale_document_type',
+			__( 'Document type for the invoice', 'wc-bsale' ),
+			array( $this, 'document_type_callback' ),
 			'wc_bsale_invoice',
 			'wc_bsale_invoice_section'
 		);
@@ -166,28 +251,6 @@ class Invoice_Settings implements Setting_Interface {
 	}
 
 	/**
-	 * Callback for the document type field.
-	 *
-	 * @return void
-	 */
-	public function document_type_callback(): void {
-		?>
-		<fieldset>
-			<legend class="screen-reader-text"><span><?php esc_html_e( 'Document type for the invoice', 'wc-bsale' ); ?></span></legend>
-			<select name="wc_bsale_invoice[document_type]" id="wc_bsale_invoice_document_type">
-			</select>
-			<p class="description"><?php esc_html_e( 'Select the type of document that represent an electronic invoice in Bsale.', 'wc-bsale' ); ?></p>
-			<div class="wc-bsale-notice wc-bsale-notice-error">
-				<p>
-					<span class="dashicons dashicons-warning"></span>
-					<?php esc_html_e( 'If you select a document type that is not an electronic invoice, the document will not be generated.', 'wc-bsale' ); ?>
-				</p>
-			</div>
-		</fieldset>
-		<?php
-	}
-
-	/**
 	 * Callback for the order status field.
 	 *
 	 * @return void
@@ -196,12 +259,46 @@ class Invoice_Settings implements Setting_Interface {
 		?>
 		<fieldset>
 			<legend class="screen-reader-text"><span><?php esc_html_e( 'Generate invoice on order status', 'wc-bsale' ); ?></span></legend>
-			<select name="wc_bsale_invoice[order_status]" id="wc_bsale_invoice_order_status">
+			<select name="wc_bsale_invoice[order_status]" id="wc_bsale_invoice_order_status" style="width: 50%">
 				<?php foreach ( wc_get_order_statuses() as $status => $label ) : ?>
 					<option value="<?php echo esc_attr( $status ); ?>" <?php selected( $this->settings['order_status'] ?? '', $status ); ?>><?php echo esc_html( $label ); ?></option>
 				<?php endforeach; ?>
 			</select>
 			<p class="description"><?php esc_html_e( 'Select the order status that will trigger the generation of the invoice.', 'wc-bsale' ); ?></p>
+		</fieldset>
+		<?php
+	}
+
+	/**
+	 * Callback for the document type field.
+	 *
+	 * @return void
+	 */
+	public function document_type_callback(): void {
+		?>
+		<fieldset>
+			<legend class="screen-reader-text"><span><?php esc_html_e( 'Document type for the invoice', 'wc-bsale' ); ?></span></legend>
+			<select name="wc_bsale_invoice[document_type]" id="wc_bsale_invoice_document_type" class="wc-bsale-ajax-select2" data-placeholder="<?php esc_attr_e( 'Search a document type by name', 'wc-bsale' ); ?>"
+					data-ajax-action="search_bsale_document_types" style="width: 50%">
+				<?php
+				if ( $this->selected_document_type ) {
+					echo '<option value="' . $this->selected_document_type['id'] . '" selected>' . $this->selected_document_type['text'] . '</option>';
+				}
+				?>
+			</select>
+			<p class="description"><?php esc_html_e( 'Select the type of document that represent an electronic invoice in Bsale.', 'wc-bsale' ); ?></p>
+			<div class="wc-bsale-notice wc-bsale-notice-error">
+				<p>
+					<span class="dashicons dashicons-warning"></span>
+					<?php esc_html_e( 'If you select a document type that is not an electronic invoice, the document won\'t be generated or will be created with errors.', 'wc-bsale' ); ?>
+				</p>
+			</div>
+			<div class="wc-bsale-notice wc-bsale-notice-info">
+				<p>
+					<span class="dashicons dashicons-visibility"></span>
+					<?php esc_html_e( 'If you don\'t see the document type you are looking for, please make sure it is active and its name is not empty.', 'wc-bsale' ); ?>
+				</p>
+			</div>
 		</fieldset>
 		<?php
 	}
@@ -215,7 +312,8 @@ class Invoice_Settings implements Setting_Interface {
 		?>
 		<fieldset>
 			<legend class="screen-reader-text"><span><?php esc_html_e( 'Office where the document is generated', 'wc-bsale' ); ?></span></legend>
-			<select id="wc_bsale_invoice_office_id" name="wc_bsale_invoice[office_id]">
+			<select id="wc_bsale_invoice_office_id" name="wc_bsale_invoice[office_id]" class="wc-bsale-ajax-select2" data-placeholder="<?php esc_attr_e( 'Search an office by name', 'wc-bsale' ); ?>" data-allow-clear="true"
+					data-ajax-action="search_bsale_offices" style="width: 50%">
 				<option value=""><?php esc_html_e( 'Use the default office', 'wc-bsale' ); ?></option>
 				<?php
 				if ( $this->selected_office ) {
@@ -223,7 +321,13 @@ class Invoice_Settings implements Setting_Interface {
 				}
 				?>
 			</select>
-			<p class="description"><?php esc_html_e( 'Select the office where the document is generated. If no office is selected, the default office on Bsale for your account will be used.', 'wc-bsale' ); ?></p>
+			<p class="description"><?php esc_html_e( 'Select the Bsale office where the document is generated. If no office is selected, the default office on Bsale for your account will be used.', 'wc-bsale' ); ?></p>
+			<div class="wc-bsale-notice wc-bsale-notice-info">
+				<p>
+					<span class="dashicons dashicons-visibility"></span>
+					<?php esc_html_e( 'If you don\'t see the office you are looking for, please make sure it is active and its name is not empty.', 'wc-bsale' ); ?>
+				</p>
+			</div>
 		</fieldset>
 		<?php
 	}
@@ -237,7 +341,8 @@ class Invoice_Settings implements Setting_Interface {
 		?>
 		<fieldset>
 			<legend class="screen-reader-text"><span><?php esc_html_e( 'Price list to use with the invoice', 'wc-bsale' ); ?></span></legend>
-			<select id="wc_bsale_price_list_id" name="wc_bsale_invoice[price_list_id]">
+			<select id="wc_bsale_price_list_id" name="wc_bsale_invoice[price_list_id]" class="wc-bsale-ajax-select2" data-placeholder="<?php esc_attr_e( 'Search a price list by name', 'wc-bsale' ); ?>" data-allow-clear="true"
+					data-ajax-action="search_bsale_price_lists" style="width: 50%">
 				<option value=""><?php esc_html_e( 'Use the default price list', 'wc-bsale' ); ?></option>
 				<?php
 				if ( $this->selected_price_list ) {
@@ -246,6 +351,11 @@ class Invoice_Settings implements Setting_Interface {
 				?>
 			</select>
 			<p class="description"><?php esc_html_e( 'Select the price list to use with the invoice. If no price list is selected, the default price list of the selected office will be used.', 'wc-bsale' ); ?></p>
+			<div class="wc-bsale-notice wc-bsale-notice-info">
+				<p>
+					<span class="dashicons dashicons-visibility"></span>
+					<?php esc_html_e( 'If you don\'t see the price list you are looking for, please make sure it is active and its name is not empty.', 'wc-bsale' ); ?>
+				</p>
 		</fieldset>
 		<?php
 	}
