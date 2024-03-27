@@ -8,9 +8,10 @@
 
 namespace WC_Bsale\Admin;
 
-use const WC_Bsale\PLUGIN_URL;
-
 defined( 'ABSPATH' ) || exit;
+
+use WC_Bsale\Ajax_Handler;
+use const WC_Bsale\PLUGIN_URL;
 
 /**
  * Admin_Init class
@@ -26,9 +27,8 @@ class Admin_Init {
 		// Add the admin hooks for the stock synchronization
 		new Hooks\Stock();
 
-		// Register the AJAX action for searching Bsale offices
-		// I do it here because I tried to do it in the Stock_Settings class, and it didn't work (probably because that class is instantiated after the AJAX hooks can be registered).
-		add_action( 'wp_ajax_search_bsale_offices', array( 'WC_Bsale\Admin\Settings\Stock_Settings', 'search_bsale_offices' ) );
+		// Load the AJAX handlers
+		new Ajax_Handler();
 	}
 
 	/**

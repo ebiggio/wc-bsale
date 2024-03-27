@@ -104,16 +104,25 @@ class Stock_Settings implements Setting_Interface {
 		return __( 'Stock synchronization', 'wc-bsale' );
 	}
 
+	/**
+	 * Loads the resources needed for the stock settings page (styles and scripts).
+	 *
+	 * @return void
+	 */
 	public function load_page_resources(): void {
-		// Enqueue the Select2 plugin
-		wp_enqueue_style( 'wc-bsale-admin-stock', 'https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css' );
-		wp_enqueue_script( 'wc-bsale-admin-stock-select2', 'https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js' );
+		// Enqueue WooCommerce's admin styles and the product editor styles for Select2
+		wp_enqueue_style( 'woocommerce_admin_styles', WC()->plugin_url() . '/assets/css/admin.css' );
+		wp_enqueue_style( 'woocommerce_product_editor_styles', WC()->plugin_url() . '/assets/client/admin/product-editor/style.css' );
+
+		// WooCommerce JS script for Select2
+		wp_enqueue_script( 'wc-enhanced-select' );
 
 		// Enqueue the JavaScript file for the office selection and localize the script with the URL for the AJAX request
 		wp_enqueue_script( 'wc-bsale-admin-stock', PLUGIN_URL . 'assets/js/wc-bsale-admin-stock.js', array( 'jquery' ), null, true );
-		wp_localize_script( 'wc-bsale-admin-stock', 'bsale_offices', array(
-			'offices_ajax_url'    => admin_url( 'admin-ajax.php' ),
-			'select2_placeholder' => 'Search for an office...',
+		wp_localize_script( 'wc-bsale-admin-stock', 'stock_parameters', array(
+			'ajax_url'    => admin_url( 'admin-ajax.php' ),
+			'placeholder' => 'Search for an office by name',
+			'nonce'       => wp_create_nonce( 'search_bsale_data' )
 		) );
 	}
 
@@ -140,52 +149,7 @@ class Stock_Settings implements Setting_Interface {
 	}
 
 	/**
-	 * Search offices by name on Bsale and send them as a JSON response formatted for the Select2 plugin.
-	 *
-	 * This method is expected to be called via an AJAX request, with the 'term' parameter set to the search term.
-	 * If there is an error getting the offices from Bsale, an error message will be sent as a disabled option for the Select2 plugin.
-	 *
-	 * @return void
-	 */
-	public static function search_bsale_offices(): void {
-		$term = sanitize_text_field( $_GET['term'] );
-
-		$bsale_offices = array();
-
-		$bsale_api_client = new Bsale_API_Client();
-
-		try {
-			$bsale_offices = $bsale_api_client->search_offices_by_name( $term );
-		} catch ( \Exception $e ) {
-			// Send an error message as a disabled option for the Select2 plugin
-			wp_send_json( array(
-				'results' => array(
-					array(
-						'id'       => '-1',
-						'text'     => 'There was an error getting the offices from Bsale: ' . $e->getMessage(),
-						'disabled' => true,
-					),
-				),
-			) );
-
-			wp_die();
-		}
-
-		// Transform the array of offices into an array of objects with the required format for the Select2 plugin
-		$bsale_offices = array_map( function ( $office ) {
-			return array(
-				'id'   => $office['id'],
-				'text' => $office['name'],
-			);
-		}, $bsale_offices );
-
-		wp_send_json( array( 'results' => $bsale_offices ) );
-
-		wp_die();
-	}
-
-	/**
-	 * Manages the stock settings page.
+	 * Displays the stock settings page.
 	 *
 	 * @return void
 	 */

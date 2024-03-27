@@ -184,14 +184,11 @@ class Cron_Settings implements Setting_Interface {
 	}
 
 	/**
-	 * Loads the resources for the settings page.
+	 * Loads the resources needed for the cron settings page (styles and scripts).
 	 *
 	 * @return void
 	 */
 	private function load_page_resources(): void {
-		// Enqueue Select2 CSS
-		wp_enqueue_style( 'woocommerce_select2', WC()->plugin_url() . '/assets/css/select2.css' );
-
 		// Enqueue WooCommerce's admin styles and the product editor styles for the product search with Select2
 		wp_enqueue_style( 'woocommerce_admin_styles', WC()->plugin_url() . '/assets/css/admin.css' );
 		wp_enqueue_style( 'woocommerce_product_editor_styles', WC()->plugin_url() . '/assets/client/admin/product-editor/style.css' );

@@ -7,17 +7,18 @@ document.addEventListener('DOMContentLoaded', updateAutoCheckboxStatus);
 
 jQuery(document).ready(function ($) {
     $('#wc_bsale_transversal_office_id').select2({
-        placeholder: bsale_offices.select2_placeholder,
-        minimumInputLength: 2,
+        placeholder: stock_parameters.placeholder,
+        minimumInputLength: 3,
         allowClear: true,
         ajax: {
-            url: bsale_offices.offices_ajax_url,
+            url: stock_parameters.ajax_url,
             dataType: 'json',
             delay: 250,
             data: function (params) {
                 return {
                     term: params.term,
-                    action: 'search_bsale_offices'
+                    action: 'search_bsale_offices',
+                    security: stock_parameters.nonce
                 }
             },
             cache: true
