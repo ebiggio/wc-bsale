@@ -10,7 +10,7 @@ namespace WC_Bsale\Storefront\Hooks;
 
 defined( 'ABSPATH' ) || exit;
 
-use WC_Bsale\Bsale_API_Client;
+use WC_Bsale\Bsale\API_Client;
 use WC_Bsale\DB_Logger;
 use WC_Bsale\Interfaces\API_Consumer;
 use WC_Bsale\Interfaces\Observer;
@@ -116,7 +116,7 @@ class Stock implements API_Consumer {
 			return;
 		}
 
-		$bsale_api = new Bsale_API_Client;
+		$bsale_api = new API_Client;
 
 		$this->update_stock_if_needed( 'add_to_cart', $bsale_api, $product );
 	}
@@ -142,8 +142,8 @@ class Stock implements API_Consumer {
 		// Get the cart items
 		$cart_items = $cart->get_cart();
 
-		// Get the Bsale API object
-		$bsale_api = new Bsale_API_Client;
+		// Get the Bsale API client object
+		$bsale_api = new API_Client;
 
 		// Iterate over the cart items
 		foreach ( $cart_items as $cart_item ) {
@@ -195,13 +195,13 @@ class Stock implements API_Consumer {
 	/**
 	 * Updates the stock of a product in WooCommerce if it differs from the stock in Bsale.
 	 *
-	 * @param string           $event_trigger The event trigger that originated the stock update.
-	 * @param Bsale_API_Client $bsale_api     The Bsale API client object.
-	 * @param \WC_Product      $product       The product object.
+	 * @param string                     $event_trigger The event trigger that originated the stock update.
+	 * @param \WC_Bsale\Bsale\API_Client $bsale_api     The Bsale API client object.
+	 * @param \WC_Product                $product       The product object.
 	 *
 	 * @return void
 	 */
-	private function update_stock_if_needed( string $event_trigger, Bsale_API_Client $bsale_api, \WC_Product $product ): void {
+	private function update_stock_if_needed( string $event_trigger, API_Client $bsale_api, \WC_Product $product ): void {
 		// Get the stock of the product in Bsale
 		try {
 			$bsale_stock = $bsale_api->get_stock_by_identifier( $product->get_sku(), $this->office_id );

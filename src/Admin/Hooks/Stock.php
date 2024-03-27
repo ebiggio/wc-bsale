@@ -10,7 +10,7 @@ namespace WC_Bsale\Admin\Hooks;
 
 defined( 'ABSPATH' ) || exit;
 
-use WC_Bsale\Bsale_API_Client;
+use WC_Bsale\Bsale\API_Client;
 
 /**
  * Stock class
@@ -114,7 +114,7 @@ class Stock {
 				return;
 			}
 
-			$bsale_api = new Bsale_API_Client();
+			$bsale_api = new API_Client();
 
 			// If the user has clicked the "Sync Stock" button or the settings to sync automatically is enabled, we update the stock of the variations with the stock in Bsale
 			if ( isset( $_POST['wc_bsale_sync_stock'] ) || $this->admin_stock_settings['auto_update'] ) {
@@ -216,7 +216,7 @@ class Stock {
 		}
 
 		$wc_stock  = (int) get_post_meta( $product->get_id(), '_stock', true );
-		$bsale_api = new Bsale_API_Client();
+		$bsale_api = new API_Client();
 
 		try {
 			$bsale_stock = $bsale_api->get_stock_by_identifier( $sku, $this->office_id );

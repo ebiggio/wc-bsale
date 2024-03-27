@@ -10,9 +10,8 @@ namespace WC_Bsale\Admin\Settings;
 
 defined( 'ABSPATH' ) || exit;
 
+use WC_Bsale\Bsale\API_Client;
 use WC_Bsale\Interfaces\Setting as Setting_Interface;
-use WC_Bsale\Bsale_API_Client;
-
 use const WC_Bsale\PLUGIN_URL;
 
 /**
@@ -20,6 +19,11 @@ use const WC_Bsale\PLUGIN_URL;
  */
 class Stock_Settings implements Setting_Interface {
 	private array|bool $settings;
+	/**
+	 * The selected office stored in the settings, with its ID and name. Used to set the selected option in the select element. Null if no office is selected.
+	 *
+	 * @var array|null
+	 */
 	private array|null $selected_office = null;
 
 	public function __construct() {
@@ -113,12 +117,17 @@ class Stock_Settings implements Setting_Interface {
 		) );
 	}
 
+	/**
+	 * Gets the office data from Bsale for the office ID stored in the settings.
+	 *
+	 * @return void
+	 */
 	public function load_bsale_office(): void {
 		// Check if an office ID is stored in the configuration. If it is, get its name from Bsale to set it as the selected option in the select element
 		$office_id = (int) ( $this->settings['office_id'] ?? null );
 
 		if ( $office_id ) {
-			$bsale_api_client = new Bsale_API_Client();
+			$bsale_api_client = new API_Client();
 
 			try {
 				$office = $bsale_api_client->get_office_by_id( $office_id );

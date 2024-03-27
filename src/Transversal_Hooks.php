@@ -10,6 +10,7 @@ namespace WC_Bsale;
 
 defined( 'ABSPATH' ) || exit;
 
+use WC_Bsale\Bsale\API_Client;
 use WC_Bsale\Interfaces\API_Consumer;
 use WC_Bsale\Interfaces\Observer;
 
@@ -227,7 +228,7 @@ class Transversal_Hooks implements API_Consumer {
 		$note           = strip_tags( $this->transversal_settings['stock']['note'] );
 		$formatted_note = str_replace( array( '{1}', '{2}', "\r", "\n" ), array( get_bloginfo( 'name' ), $order_number, '', '' ), $note );
 
-		$bsale_api_client     = new Bsale_API_Client();
+		$bsale_api_client     = new API_Client();
 		$bsale_stock_consumed = $bsale_api_client->consume_stock( $formatted_note, $office_id, $products_to_consume_stock );
 
 		if ( $bsale_stock_consumed ) {

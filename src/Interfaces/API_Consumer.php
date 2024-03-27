@@ -1,6 +1,9 @@
 <?php
 /**
- * Interface for the classes that will consume the Bsale API.
+ * Interface for the classes that will consume the Bsale API without direct supervision from a user.
+ *
+ * This interface defines the methods that the classes that consume the Bsale API must implement to use the observer pattern.
+ * Those observers will then be able to log the operations, send notifications, etc.
  *
  * @class   API_Consumer
  * @package WC_Bsale
