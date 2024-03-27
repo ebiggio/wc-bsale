@@ -22,6 +22,7 @@ class Invoice_Settings implements Setting_Interface {
 	private array|null $selected_document_type = null;
 	private array|null $selected_office = null;
 	private array|null $selected_price_list = null;
+	private array|null $selected_tax = null;
 
 	public function __construct() {
 		$this->settings = maybe_unserialize( get_option( 'wc_bsale_invoice' ) );
@@ -34,6 +35,7 @@ class Invoice_Settings implements Setting_Interface {
 				'document_type' => 0,
 				'office_id'     => 0,
 				'price_list_id' => 0,
+				'tax_id'        => 0,
 				'declare_sii'   => 0
 			);
 		}
@@ -60,6 +62,7 @@ class Invoice_Settings implements Setting_Interface {
 		$settings['document_type'] = (int) $_POST['wc_bsale_invoice']['document_type'];
 		$settings['office_id']     = (int) $_POST['wc_bsale_invoice']['office_id'];
 		$settings['price_list_id'] = (int) $_POST['wc_bsale_invoice']['price_list_id'];
+		$settings['tax_id']        = (int) $_POST['wc_bsale_invoice']['tax_id'];
 		$settings['declare_sii']   = isset( $_POST['wc_bsale_invoice']['declare_sii'] ) ? 1 : 0;
 
 		return $settings;
@@ -152,6 +155,15 @@ class Invoice_Settings implements Setting_Interface {
 	}
 
 	/**
+	 * Gets the tax data from Bsale for the tax ID stored in the settings.
+	 *
+	 * @return void
+	 */
+	private function load_bsale_tax(): void {
+		$this->selected_tax = $this->load_bsale_entity( (int) $this->settings['tax_id'], 'get_tax_by_id' );
+	}
+
+	/**
 	 * Displays the invoice settings page.
 	 *
 	 * @return void
@@ -161,6 +173,7 @@ class Invoice_Settings implements Setting_Interface {
 		$this->load_bsale_document_type();
 		$this->load_bsale_office();
 		$this->load_bsale_price_list();
+		$this->load_bsale_tax();
 
 		add_settings_section(
 			'wc_bsale_invoice_section',
@@ -205,6 +218,14 @@ class Invoice_Settings implements Setting_Interface {
 			'wc_bsale_price_list',
 			__( 'Price list to use with the invoice', 'wc-bsale' ),
 			array( $this, 'price_list_callback' ),
+			'wc_bsale_invoice',
+			'wc_bsale_invoice_section'
+		);
+
+		add_settings_field(
+			'wc_bsale_tax',
+			__( 'Bsale tax to use with the invoice', 'wc-bsale' ),
+			array( $this, 'tax_callback' ),
 			'wc_bsale_invoice',
 			'wc_bsale_invoice_section'
 		);
@@ -314,7 +335,6 @@ class Invoice_Settings implements Setting_Interface {
 			<legend class="screen-reader-text"><span><?php esc_html_e( 'Office where the document is generated', 'wc-bsale' ); ?></span></legend>
 			<select id="wc_bsale_invoice_office_id" name="wc_bsale_invoice[office_id]" class="wc-bsale-ajax-select2" data-placeholder="<?php esc_attr_e( 'Search an office by name', 'wc-bsale' ); ?>" data-allow-clear="true"
 					data-ajax-action="search_bsale_offices" style="width: 50%">
-				<option value=""><?php esc_html_e( 'Use the default office', 'wc-bsale' ); ?></option>
 				<?php
 				if ( $this->selected_office ) {
 					echo '<option value="' . $this->selected_office['id'] . '" selected>' . $this->selected_office['text'] . '</option>';
@@ -343,7 +363,6 @@ class Invoice_Settings implements Setting_Interface {
 			<legend class="screen-reader-text"><span><?php esc_html_e( 'Price list to use with the invoice', 'wc-bsale' ); ?></span></legend>
 			<select id="wc_bsale_price_list_id" name="wc_bsale_invoice[price_list_id]" class="wc-bsale-ajax-select2" data-placeholder="<?php esc_attr_e( 'Search a price list by name', 'wc-bsale' ); ?>" data-allow-clear="true"
 					data-ajax-action="search_bsale_price_lists" style="width: 50%">
-				<option value=""><?php esc_html_e( 'Use the default price list', 'wc-bsale' ); ?></option>
 				<?php
 				if ( $this->selected_price_list ) {
 					echo '<option value="' . $this->selected_price_list['id'] . '" selected>' . $this->selected_price_list['text'] . '</option>';
@@ -357,6 +376,34 @@ class Invoice_Settings implements Setting_Interface {
 					<?php esc_html_e( 'If you don\'t see the price list you are looking for, please make sure it is active and its name is not empty.', 'wc-bsale' ); ?>
 				</p>
 		</fieldset>
+		<?php
+	}
+
+	/**
+	 * Callback for the tax field.
+	 *
+	 * @return void
+	 */
+	public function tax_callback(): void {
+		?>
+		<fieldset>
+			<legend class="screen-reader-text"><span><?php esc_html_e( 'Bsale tax to use with the invoice', 'wc-bsale' ); ?></span></legend>
+			<select name="wc_bsale_invoice[tax_id]" id="wc_bsale_invoice_tax_id" class="wc-bsale-ajax-select2" data-placeholder="<?php esc_attr_e( 'Search a tax by name', 'wc-bsale' ); ?>" data-allow-clear="true"
+					data-ajax-action="search_bsale_taxes" style="width: 50%">
+				<?php
+				if ( $this->selected_tax ) {
+					echo '<option value="' . $this->selected_tax['id'] . '" selected>' . $this->selected_tax['text'] . '</option>';
+				}
+				?>
+			</select>
+			<p class="description"><?php esc_html_e( 'This tax will be used to calculate the net price of the products. That net price will be then send to Bsale as the invoice details along with the tax ID.', 'wc-bsale' ); ?></p>
+		</fieldset>
+		<div class="wc-bsale-notice wc-bsale-notice-info">
+			<p>
+				<span class="dashicons dashicons-visibility"></span>
+				<?php esc_html_e( 'If you don\'t see the tax you are looking for, please make sure it is active and its name is not empty.', 'wc-bsale' ); ?>
+			</p>
+		</div>
 		<?php
 	}
 

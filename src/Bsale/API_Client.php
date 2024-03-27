@@ -332,4 +332,32 @@ class API_Client {
 	public function get_price_list_by_id( int $price_list_id ): array {
 		return $this->get_active_entity_by_id( $price_list_id, 'price_lists/' );
 	}
+
+	/**
+	 * Searches for **active** taxes in Bsale by their names and returns their IDs and names.
+	 *
+	 * @param string $name The name of the tax to search for.
+	 *
+	 * @return array The list of taxes that matches the name provided. Will be empty if no taxes were found or if an empty name was provided.
+	 * @throws \Exception If there was an error fetching the list of taxes from Bsale.
+	 *
+	 * @see \WC_Bsale\Bsale\API_Client::search_entities_by_name() For the implementation of the search.
+	 */
+	public function search_taxes_by_name( string $name ): array {
+		return $this->search_entities_by_name( $name, 'taxes.json' );
+	}
+
+	/**
+	 * Gets the details of an **active** tax by its ID.
+	 *
+	 * @param int $tax_id The ID of the tax to get.
+	 *
+	 * @return array The tax's data. Will be empty if the tax was not found, an empty ID was provided, or if the tax is not active.
+	 * @throws \Exception If there was an error fetching the tax from Bsale.
+	 *
+	 * @see \WC_Bsale\Bsale\API_Client::get_active_entity_by_id() For the implementation of how the tax is fetched.
+	 */
+	public function get_tax_by_id( int $tax_id ): array {
+		return $this->get_active_entity_by_id( $tax_id, 'taxes/' );
+	}
 }

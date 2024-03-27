@@ -20,6 +20,7 @@ class Ajax_Handler {
 		add_action( 'wp_ajax_search_bsale_offices', array( $this, 'search_bsale_offices' ) );
 		add_action( 'wp_ajax_search_bsale_document_types', array( $this, 'search_bsale_document_types' ) );
 		add_action( 'wp_ajax_search_bsale_price_lists', array( $this, 'search_bsale_price_lists' ) );
+		add_action( 'wp_ajax_search_bsale_taxes', array( $this, 'search_bsale_taxes' ) );
 	}
 
 	/**
@@ -53,6 +54,15 @@ class Ajax_Handler {
 	 */
 	public static function search_bsale_price_lists(): void {
 		search_bsale_data( 'search_price_lists_by_name', __( 'There was an error getting the price lists from Bsale', 'wc-bsale' ) );
+	}
+
+	/**
+	 * Search active Bsale taxes by name and outputs the results as JSON in a format that can be used by the Select2 plugin.
+	 *
+	 * @return void
+	 */
+	public static function search_bsale_taxes(): void {
+		search_bsale_data( 'search_taxes_by_name', __( 'There was an error getting the taxes from Bsale', 'wc-bsale' ) );
 	}
 }
 
