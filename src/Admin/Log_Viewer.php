@@ -207,16 +207,17 @@ class Log_Viewer extends \WP_List_Table {
 					// For variations, the URL points to the parent product
 					$parent_id = $product->get_parent_id();
 					$edit_url  = admin_url( 'post.php?post=' . $parent_id . '&action=edit' );
-					$text_link = __('Variation', 'wc-bsale');
+					$text_link = __( 'Variation', 'wc-bsale' );
 				} else {
 					// For simple products, generate the edit URL normally
-					$edit_url = admin_url( 'post.php?post=' . $product_id . '&action=edit' );
-					$text_link = __('Product', 'wc-bsale');
+					$edit_url  = admin_url( 'post.php?post=' . $product_id . '&action=edit' );
+					$text_link = __( 'Product', 'wc-bsale' );
 				}
 
 				$identifier_url = '<a href="' . $edit_url . '" target="_blank" >' . $text_link . ' SKU [' . $identifier . ']' . '</a>';
 				break;
 			case 'consume_bsale_stock':
+			case 'generate_invoice':
 				// The identifier is an order ID
 				$order_id = (int) $identifier;
 				$order    = wc_get_order( $order_id );
