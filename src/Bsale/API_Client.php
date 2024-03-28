@@ -250,6 +250,57 @@ class API_Client {
 	}
 
 	/**
+	 * Generates a document in Bsale. The type of document to generate will depend on the data provided.
+	 *
+	 * @param array $document_data The data of the document to generate. The data must be in the format expected by the Bsale API.
+	 *
+	 * @return array The response data from Bsale. Will be empty if there was an error generating the document.
+	 */
+	public function generate_document( array $document_data ): array {
+		$api_endpoint = 'documents.json';
+
+		try {
+			$bsale_response = $this->make_request( $api_endpoint, 'POST', $document_data );
+		} catch ( \Exception $e ) {
+			return array();
+		}
+
+		return (array) $bsale_response;
+	}
+
+	/**
+	 * Wrapper function to generate an invoice in Bsale.
+	 *
+	 * Will remove the 'officeId' and 'priceListId' keys from the data if they are set to 0, making Bsale use the default values of the account when generating the invoice.
+	 *
+	 * @param array $invoice_data The data of the invoice to generate.
+	 *
+	 * @return array The response data from Bsale. Will be empty if there was an error generating the invoice.
+	 */
+	public function generate_invoice( array $invoice_data ): array {
+		// Check if the office ID is set. If it's not, remove it from the data
+		if ( 0 === $invoice_data['officeId'] ) {
+			unset( $invoice_data['officeId'] );
+		}
+
+		// Check if the price list ID is set. If it's not, remove it from the data
+		if ( 0 === $invoice_data['priceListId'] ) {
+			unset( $invoice_data['priceListId'] );
+		}
+
+		// Replace the identifier key with the configured product identifier
+		foreach ( $invoice_data['details'] as $key => $item ) {
+			// TODO Check if the product identifier is case-sensitive in the production environment
+			$product_identifier = 'barcode' === $this->product_identifier ? 'barCode' : 'code';
+
+			$invoice_data['details'][ $key ][ $product_identifier ] = $item['identifier'];
+			unset( $invoice_data['details'][ $key ]['identifier'] );
+		}
+
+		return $this->generate_document( $invoice_data );
+	}
+
+	/**
 	 * Searches for **active** offices in Bsale by their names and returns their IDs and names.
 	 *
 	 * @param string $name The name of the office to search for.

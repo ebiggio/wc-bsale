@@ -16,7 +16,7 @@ The WooCommerce Bsale Integration Plugin is designed to improve the WooCommerce 
 
 - **Price synchronization**: Planned feature.
 
-- **Invoice generation**: Planned feature.
+- **Invoice generation**: Ability to generate invoices in Bsale when an order changes status to a specific one, which can be configured in the settings page.
 
 
 ## Installation

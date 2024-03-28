@@ -396,7 +396,7 @@ class Invoice_Settings implements Setting_Interface {
 				}
 				?>
 			</select>
-			<p class="description"><?php esc_html_e( 'This tax will be used to calculate the net price of the products. That net price will be then send to Bsale as the invoice details along with the tax ID.', 'wc-bsale' ); ?></p>
+			<p class="description"><?php esc_html_e( 'This tax will be used to calculate the net price of the products. That net price will be then send to Bsale in the invoice details.', 'wc-bsale' ); ?></p>
 		</fieldset>
 		<div class="wc-bsale-notice wc-bsale-notice-info">
 			<p>
