@@ -144,11 +144,16 @@ class Invoice implements API_Consumer {
 			);
 		}
 
+		// Emission and expiration date must be a UNIX timestamp of the current date, with the time set to 00:00:00
+		$wordpress_timezone = get_option( 'timezone_string' ) ?: 'UTC';
+		$current_date       = new \DateTime( 'now', new \DateTimeZone( $wordpress_timezone ) );
+		$current_date->setTime( 0, 0 );
+
 		$invoice_data = array(
 			'documentTypeId' => (int) $this->settings['document_type'],
 			'officeId'       => (int) $this->settings['office_id'],
-			'emissionDate'   => time(),
-			'expirationDate' => time(),
+			'emissionDate'   => $current_date->getTimestamp(),
+			'expirationDate' => $current_date->getTimestamp(),
 			'declareSii'     => (int) $this->settings['declare_sii'],
 			'priceListId'    => (int) $this->settings['price_list_id'],
 			'details'        => $invoice_details,
