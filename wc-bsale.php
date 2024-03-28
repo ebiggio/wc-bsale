@@ -3,7 +3,7 @@
 Plugin Name: WooCommerce Bsale Integration
 Plugin URI: https://github.com/ebiggio/wc-bsale
 Description: WooCommerce plugin to integrate with the Bsale system, allowing you to sync product stocks, prices and generate electronic invoices.
-Version: 0.4.0
+Version: 0.5.0
 Author: Enzo Biggio
 Author URI: https://github.com/ebiggio/wc-bsale
 License: GPL3
@@ -12,18 +12,19 @@ Text Domain: wc-bsale
 
 namespace WC_Bsale;
 
-use WC_Bsale\Admin\Admin_Init;
-use WC_Bsale\Storefront\Storefront_Init;
-
 // Prevent direct access to this file
 defined( 'ABSPATH' ) || exit;
+
+use WC_Bsale\Transversal\Transversal_Init;
+use WC_Bsale\Admin\Admin_Init;
+use WC_Bsale\Storefront\Storefront_Init;
 
 // Check if this plugin is active
 if ( ! in_array( 'wc-bsale/wc-bsale.php', apply_filters( 'active_plugins', get_option( 'active_plugins' ) ) ) ) {
 	return;
 }
 
-const PLUGIN_VERSION = '0.4.0';
+const PLUGIN_VERSION = '0.5.0';
 const PLUGIN_DIR     = __DIR__;
 define( "WC_Bsale\PLUGIN_URL", plugin_dir_url( __FILE__ ) );
 
@@ -57,7 +58,7 @@ add_action( 'wc_bsale_cron', array( new Cron(), 'run' ) );
 // And away we go
 // --------------
 // Load the transversal hooks, which are hooks that can be fired both from the storefront or the admin side
-new Transversal_Hooks();
+new Transversal_Init();
 
 if ( is_admin() ) {
 	new Admin_Init();

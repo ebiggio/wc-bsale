@@ -1,64 +1,55 @@
 <?php
 /**
- * Encompasses the hooks that are fired on both the admin and storefront sides.
+ * Encompasses the stock consumption hooks that are fired from both the admin and storefront sides.
  *
  * @package WC_Bsale
- * @class   Transversal_Hooks
+ * @class   Stock
  */
 
-namespace WC_Bsale;
+namespace WC_Bsale\Transversal;
 
 defined( 'ABSPATH' ) || exit;
 
 use WC_Bsale\Bsale\API_Client;
+use WC_Bsale\DB_Logger;
 use WC_Bsale\Interfaces\API_Consumer;
 use WC_Bsale\Interfaces\Observer;
 
 /**
- * Transversal_Hooks class
+ * Stock class
  */
-class Transversal_Hooks implements API_Consumer {
-	private array $transversal_settings = array();
+class Stock implements API_Consumer {
+	/**
+	 * The observers that will be notified when an event is triggered.
+	 *
+	 * @var array
+	 */
 	private array $observers = array();
+	/**
+	 * The stock settings from the plugin options.
+	 *
+	 * @var array
+	 */
+	private array $stock_settings;
 
-	public function __construct() {
-		$this->transversal_settings = $this->get_transversal_settings();
-
-		// Add the hooks after WooCommerce is loaded
-		add_action( 'woocommerce_loaded', array( $this, 'init_hooks' ) );
-
-		// Hide the meta data from the order items
-		add_filter( 'woocommerce_hidden_order_itemmeta', function ( $hidden_order_itemmeta ) {
-			$hidden_order_itemmeta[] = '_wc_bsale_stock_consumed';
-
-			return $hidden_order_itemmeta;
-		} );
-
+	public function __construct( array $stock_settings ) {
 		// Add the database logger as an observer
 		$this->add_observer( DB_Logger::get_instance() );
+
+		$this->stock_settings = $stock_settings;
+
+		$this->register_stock_hooks();
 	}
 
 	/**
-	 * Adds an observer to the list of observers.
-	 *
-	 * @param \WC_Bsale\Interfaces\Observer $observer
-	 *
-	 * @return void
+	 * @inheritDoc
 	 */
 	public function add_observer( Observer $observer ): void {
 		$this->observers[] = $observer;
 	}
 
 	/**
-	 * Notifies all the observers of an event.
-	 *
-	 * @param string $event_trigger
-	 * @param string $event_type
-	 * @param string $identifier
-	 * @param string $message
-	 * @param string $result_code
-	 *
-	 * @return void
+	 * @inheritDoc
 	 */
 	public function notify_observers( string $event_trigger, string $event_type, string $identifier, string $message, string $result_code = 'info' ): void {
 		foreach ( $this->observers as $observer ) {
@@ -67,68 +58,24 @@ class Transversal_Hooks implements API_Consumer {
 	}
 
 	/**
-	 * Initializes the hooks.
-	 *
-	 * @return void
-	 */
-	public function init_hooks(): void {
-		$this->stock_hooks();
-	}
-
-	/**
-	 * Gets the plugin settings that govern traversal hooks.
-	 *
-	 * @return array[]
-	 */
-	private function get_transversal_settings(): array {
-		$stock_settings = maybe_unserialize( get_option( 'wc_bsale_stock' ) );
-
-		$default_stock_settings = array(
-			'stock' =>
-				array(
-					'office_id'    => 0,
-					'order_event'  => '',
-					'order_status' => array(),
-					'note'         => ''
-				),
-		);
-
-		if ( ! $stock_settings ) {
-			return $default_stock_settings;
-		}
-
-		$transversal_stock_settings = $stock_settings['transversal'] ?? $default_stock_settings;
-
-		return array(
-			'stock' =>
-				array(
-					'office_id'    => (int) $stock_settings['office_id'],
-					'order_event'  => $transversal_stock_settings['order_event'],
-					'order_status' => maybe_unserialize( $transversal_stock_settings['order_status'] ) ?? array(),
-					'note'         => $transversal_stock_settings['note']
-				),
-		);
-	}
-
-	/**
 	 * Sets the hooks for stock consumption in Bsale according to the plugin options.
 	 *
 	 * @return void
 	 */
-	private function stock_hooks(): void {
+	private function register_stock_hooks(): void {
 		// The stock hooks dependes of an office being set to use it when consuming the stock
-		if ( ! $this->transversal_settings['stock']['office_id'] ) {
+		if ( ! $this->stock_settings['office_id'] ) {
 			return;
 		}
 
-		if ( 'wc' === $this->transversal_settings['stock']['order_event'] ) {
+		if ( 'wc' === $this->stock_settings['order_event'] ) {
 			// wc = WooCommerce. Meaning that the stock must be consumed when WooCommerce reduces the stock
 
 			// This sends the order object to the callback function
 			add_action( 'woocommerce_reduce_order_stock', array( $this, 'check_order_for_stock_consumption' ) );
 		} else {
 			// The $order_event is set to "custom", so we hook to each defined order status to consume the stock when an order reaches that status
-			$order_status = $this->transversal_settings['stock']['order_status'];
+			$order_status = $this->stock_settings['order_status'];
 
 			foreach ( $order_status as $status ) {
 				if ( wc_is_order_status( $status ) ) {
@@ -223,9 +170,9 @@ class Transversal_Hooks implements API_Consumer {
 	 * @return bool True if the stock was consumed successfully for all the provided products. False if an empty office ID was provided, or if there was an error consuming the stock.
 	 */
 	private function consume_bsale_stock( int $order_number, array $products_to_consume_stock ): bool {
-		$office_id = $this->transversal_settings['stock']['office_id'];
+		$office_id = $this->stock_settings['office_id'];
 
-		$note           = strip_tags( $this->transversal_settings['stock']['note'] );
+		$note           = strip_tags( $this->stock_settings['note'] );
 		$formatted_note = str_replace( array( '{1}', '{2}', "\r", "\n" ), array( get_bloginfo( 'name' ), $order_number, '', '' ), $note );
 
 		$bsale_api_client     = new API_Client();
