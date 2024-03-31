@@ -10,6 +10,7 @@ namespace WC_Bsale\Transversal;
 
 defined( 'ABSPATH' ) || exit;
 
+use WC_Bsale\Admin\Settings\Invoice_Settings;
 use WC_Bsale\Bsale\API_Client;
 use WC_Bsale\DB_Logger;
 use WC_Bsale\Interfaces\API_Consumer;
@@ -22,21 +23,26 @@ class Invoice implements API_Consumer {
 	/**
 	 * The observers that will be notified when an event is triggered.
 	 *
+	 * @see Observer
+	 *
 	 * @var array
 	 */
 	private array $observers = array();
 	/**
-	 * The invoice settings from the plugin options.
+	 * The invoice settings, loaded from the Invoice_Settings class.
+	 *
+	 * @see Invoice_Settings
 	 *
 	 * @var array
 	 */
 	private array $settings;
 
-	public function __construct( array $settings ) {
+	public function __construct() {
 		// Add the database logger as an observer
 		$this->add_observer( DB_Logger::get_instance() );
 
-		$this->settings = $settings;
+		// Get the invoice settings
+		$this->settings = Invoice_Settings::get_instance()->get_settings();
 
 		$this->register_invoice_hooks();
 	}
@@ -80,6 +86,7 @@ class Invoice implements API_Consumer {
 	 * @param int $order_id The order ID.
 	 *
 	 * @return void
+	 * @throws \Exception If there is an error getting the tax data from Bsale.
 	 */
 	public function generate_invoice( int $order_id ): void {
 		$order = wc_get_order( $order_id );
@@ -117,9 +124,32 @@ class Invoice implements API_Consumer {
 			return;
 		}
 
-		// TODO Implement the capability to send the invoice to the customer's email by the "sendEmail" attribute in Bsale. Will require a new setting in the plugin and a "client" node in the invoice data with at least the customer first name and email
-		// Get the customer's email
-		$customer_email = $order->get_billing_email();
+		// Get the shipping cost and calculate its value without the tax
+		$shipping_cost = $order->get_shipping_total();
+		if ( $shipping_cost > 0 ) {
+			$shipping_cost = $shipping_cost / ( 1 + ( $tax_data['percentage'] / 100 ) );
+		}
+
+		if ( $this->settings['send_email'] && $order->get_billing_email() ) {
+			// Send the invoice to the customer's email
+			$customer_email      = $order->get_billing_email();
+			$customer_first_name = trim( $order->get_billing_first_name() );
+			$customer_last_name  = trim( $order->get_billing_last_name() );
+
+			// We need to check if the customer's first name is set, as it is a required field in Bsale if we want to send the invoice by email
+			if ( empty( $customer_first_name ) ) {
+				$customer_first_name = __( 'Customer', 'wc-bsale' );
+				$customer_last_name  = __( '', 'wc-bsale' );
+			}
+
+			$client_data['client'] = array(
+				'firstName' => $customer_first_name,
+				'lastName'  => $customer_last_name,
+				'email'     => $customer_email
+			);
+
+			$client_data['sendEmail'] = 1;
+		}
 
 		// Prepare the items to be sent to Bsale
 		$invoice_details = array();
@@ -144,6 +174,17 @@ class Invoice implements API_Consumer {
 			);
 		}
 
+		// Add the shipping cost as a product in the invoice
+		if ( $shipping_cost > 0 ) {
+			$invoice_details[] = array(
+				'comment'      => __( 'Shipping cost', 'wc-bsale' ),
+				'netUnitValue' => round( $shipping_cost ),
+				'quantity'     => 1,
+				// We must send the tax ID as an array, even if it's just one tax
+				'taxId'        => array( $tax_id )
+			);
+		}
+
 		// Emission and expiration date must be a UNIX timestamp of the current date, with the time set to 00:00:00
 		$wordpress_timezone = get_option( 'timezone_string' ) ?: 'UTC';
 		$current_date       = new \DateTime( 'now', new \DateTimeZone( $wordpress_timezone ) );
@@ -159,10 +200,16 @@ class Invoice implements API_Consumer {
 			'details'        => $invoice_details,
 		);
 
+		if ( isset( $client_data ) ) {
+			$invoice_data = array_merge( $invoice_data, $client_data );
+		}
+
 		$bsale_invoice_details = $bsale_api->generate_invoice( $invoice_data );
 
 		if ( $bsale_invoice_details ) {
-			// Save the invoice details in the order meta data
+			// Save the invoice details in the order meta data, adding the date and time of the invoice generation
+			$bsale_invoice_details['wc_bsale_generated_at'] = current_time( 'mysql' );
+
 			update_post_meta( $order_id, '_wc_bsale_invoice_details', $bsale_invoice_details );
 
 			$this->notify_observers( 'generate_invoice', 'invoice', $order_id, __( 'Invoice successfully generated in Bsale' ), 'success' );

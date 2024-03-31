@@ -36,9 +36,34 @@ class Invoice_Settings implements Setting_Interface {
 				'office_id'     => 0,
 				'price_list_id' => 0,
 				'tax_id'        => 0,
-				'declare_sii'   => 0
+				'declare_sii'   => 0,
+				'send_email'    => 0
 			);
 		}
+	}
+
+	/**
+	 * Returns an instance of the class.
+	 *
+	 * @return self The instance of the class.
+	 */
+	public static function get_instance(): self {
+		static $instance = null;
+
+		if ( null === $instance ) {
+			$instance = new self();
+		}
+
+		return $instance;
+	}
+
+	/**
+	 * Returns the settings stored in the database. If the settings are not found, a set of default settings are returned.
+	 *
+	 * @return array The invoice settings.
+	 */
+	public function get_settings(): array {
+		return $this->settings;
 	}
 
 	/**
@@ -59,11 +84,12 @@ class Invoice_Settings implements Setting_Interface {
 
 		$settings['enabled']       = isset( $_POST['wc_bsale_invoice']['enabled'] ) ? 1 : 0;
 		$settings['order_status']  = array_key_exists( $selected_order_status, $order_statuses ) ? $selected_order_status : 'wc-completed';
-		$settings['document_type'] = (int) $_POST['wc_bsale_invoice']['document_type'];
-		$settings['office_id']     = (int) $_POST['wc_bsale_invoice']['office_id'];
-		$settings['price_list_id'] = (int) $_POST['wc_bsale_invoice']['price_list_id'];
-		$settings['tax_id']        = (int) $_POST['wc_bsale_invoice']['tax_id'];
+		$settings['document_type'] = (int) isset( $_POST['wc_bsale_invoice']['document_type'] ) ? $_POST['wc_bsale_invoice']['document_type'] : 0;
+		$settings['office_id']     = (int) isset( $_POST['wc_bsale_invoice']['office_id'] ) ? $_POST['wc_bsale_invoice']['office_id'] : 0;
+		$settings['price_list_id'] = (int) isset( $_POST['wc_bsale_invoice']['price_list_id'] ) ? $_POST['wc_bsale_invoice']['price_list_id'] : 0;
+		$settings['tax_id']        = (int) isset( $_POST['wc_bsale_invoice']['tax_id'] ) ? $_POST['wc_bsale_invoice']['tax_id'] : 0;
 		$settings['declare_sii']   = isset( $_POST['wc_bsale_invoice']['declare_sii'] ) ? 1 : 0;
+		$settings['send_email']    = isset( $_POST['wc_bsale_invoice']['send_email'] ) ? 1 : 0;
 
 		return $settings;
 	}
@@ -238,6 +264,14 @@ class Invoice_Settings implements Setting_Interface {
 			'wc_bsale_invoice_section'
 		);
 
+		add_settings_field(
+			'wc_bsale_send_email',
+			__( 'Instruct Bsale to send the invoice by email?', 'wc-bsale' ),
+			array( $this, 'send_email_callback' ),
+			'wc_bsale_invoice',
+			'wc_bsale_invoice_section'
+		);
+
 		settings_fields( 'wc_bsale_invoice_settings_group' );
 		do_settings_sections( 'wc_bsale_invoice' );
 	}
@@ -286,6 +320,12 @@ class Invoice_Settings implements Setting_Interface {
 				<?php endforeach; ?>
 			</select>
 			<p class="description"><?php esc_html_e( 'Select the order status that will trigger the generation of the invoice.', 'wc-bsale' ); ?></p>
+			<div class="wc-bsale-notice wc-bsale-notice-success">
+				<p>
+					<span class="dashicons dashicons-yes"></span>
+					<?php esc_html_e( 'Even if an order changes status to the selected one multiple times, the invoice will only be generated once. The plugin will check if the order has already been invoiced, and if so, it will not generate a new invoice.', 'wc-bsale' ); ?>
+				</p>
+			</div>
 		</fieldset>
 		<?php
 	}
@@ -341,7 +381,7 @@ class Invoice_Settings implements Setting_Interface {
 				}
 				?>
 			</select>
-			<p class="description"><?php esc_html_e( 'Select the Bsale office where the document is generated. If no office is selected, the default office on Bsale for your account will be used.', 'wc-bsale' ); ?></p>
+			<p class="description"><?php esc_html_e( 'Select the Bsale office where the document is generated. If no office is selected, the default office of your Bsale account will be used.', 'wc-bsale' ); ?></p>
 			<div class="wc-bsale-notice wc-bsale-notice-info">
 				<p>
 					<span class="dashicons dashicons-visibility"></span>
@@ -421,6 +461,24 @@ class Invoice_Settings implements Setting_Interface {
 				<?php esc_html_e( 'Declare the invoice to the SII', 'wc-bsale' ); ?>
 			</label>
 			<p class="description"><?php esc_html_e( 'If you wish to declare the document to the SII, check this option.', 'wc-bsale' ); ?></p>
+		</fieldset>
+		<?php
+	}
+
+	/**
+	 * Callback for the send email field.
+	 *
+	 * @return void
+	 */
+	public function send_email_callback(): void {
+		?>
+		<fieldset>
+			<legend class="screen-reader-text"><span><?php esc_html_e( 'Instruct Bsale to send the invoice by email?', 'wc-bsale' ); ?></span></legend>
+			<label for="wc_bsale_send_email">
+				<input type="checkbox" name="wc_bsale_invoice[send_email]" id="wc_bsale_send_email" value="1" <?php checked( $this->settings['send_email'] ?? false ); ?>>
+				<?php esc_html_e( 'Send the invoice to the customer\'s email', 'wc-bsale' ); ?>
+			</label>
+			<p class="description"><?php esc_html_e( 'Check this option if you would like instruct Bsale to send the invoice to the customer by email. For this, the customer\'s firstname and email will be sent in the invoice data.', 'wc-bsale' ); ?></p>
 		</fieldset>
 		<?php
 	}
