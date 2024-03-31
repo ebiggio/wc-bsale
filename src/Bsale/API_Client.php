@@ -125,7 +125,7 @@ class API_Client {
 
 		$name = urlencode( $name );
 
-		$entities_list = $this->make_request( $endpoint . '?state=1&fields=[name]&name=' . $name );
+		$entities_list = $this->make_request( $endpoint . '?state=0&fields=[name]&name=' . $name );
 
 		foreach ( $entities_list->items as $entity ) {
 			$entities[] = array(
@@ -162,8 +162,8 @@ class API_Client {
 			return array();
 		}
 
-		// Check the entity's state. If it's not active, we return an empty array
-		if ( 1 !== $entity->state ) {
+		// Check the entity's state. If it's not active, we return an empty array. In Bsale, a state of 0 means that the entity is active (yes, it's counterintuitive)
+		if ( 0 !== $entity->state ) {
 			return array();
 		}
 
@@ -271,7 +271,7 @@ class API_Client {
 	/**
 	 * Wrapper function to generate an invoice in Bsale.
 	 *
-	 * Will remove the 'officeId' and 'priceListId' keys from the data if they are set to 0, making Bsale use the default values of the account when generating the invoice.
+	 * Will remove the 'officeId' and 'priceListId' keys from the data if they are set to 0, making Bsale use the default values of the connected account when generating the invoice.
 	 *
 	 * @param array $invoice_data The data of the invoice to generate.
 	 *
@@ -290,12 +290,19 @@ class API_Client {
 
 		// Replace the identifier key with the configured product identifier
 		foreach ( $invoice_data['details'] as $key => $item ) {
+			// Check if an identifier is set. If it's not, we don't need to do anything, since it means that the product is not in Bsale and the item must be declared "as is"
+			if ( ! isset( $item['identifier'] ) ) {
+				continue;
+			}
+
 			// TODO Check if the product identifier is case-sensitive in the production environment
 			$product_identifier = 'barcode' === $this->product_identifier ? 'barCode' : 'code';
 
 			$invoice_data['details'][ $key ][ $product_identifier ] = $item['identifier'];
 			unset( $invoice_data['details'][ $key ]['identifier'] );
 		}
+
+		error_log( 'invoice_data: ' . json_encode( $invoice_data ) );
 
 		return $this->generate_document( $invoice_data );
 	}
