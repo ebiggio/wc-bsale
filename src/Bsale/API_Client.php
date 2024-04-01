@@ -113,13 +113,14 @@ class API_Client {
 	/**
 	 * Searches for **active** entities in Bsale by their names and returns their IDs and names.
 	 *
-	 * @param string $name     The name of the entity to search for.
-	 * @param string $endpoint The API endpoint to use in the search for the entities.
+	 * @param string $name       The name of the entity to search for.
+	 * @param string $endpoint   The API endpoint to use in the search for the entities.
+	 * @param array  $parameters Additional parameters to query the endpoint, in a key-value format. Each key-value pair will be added to the query string as '&key=value'. Defaults to an empty array.
 	 *
 	 * @return array The list of entities that matches the name provided. Will be empty if no entities were found or if an empty name was provided.
 	 * @throws \Exception If there was an error fetching the list of entities from Bsale.
 	 */
-	private function search_entities_by_name( string $name, string $endpoint ): array {
+	private function search_entities_by_name( string $name, string $endpoint, array $parameters = array() ): array {
 		$entities = array();
 
 		if ( '' === $name ) {
@@ -128,7 +129,14 @@ class API_Client {
 
 		$name = urlencode( $name );
 
-		$entities_list = $this->make_request( $endpoint . '?state=0&fields=[name]&name=' . $name );
+		$additional_query_parameters = '';
+
+		// Adds any additional parameters to the query string
+		if ( ! empty( $parameters ) ) {
+			$additional_query_parameters = '&' . http_build_query( $parameters );
+		}
+
+		$entities_list = $this->make_request( $endpoint . '?state=0&fields=[name]&name=' . $name . $additional_query_parameters );
 
 		foreach ( $entities_list->items as $entity ) {
 			$entities[] = array(
