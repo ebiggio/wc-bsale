@@ -189,6 +189,8 @@ class API_Client {
 	 *
 	 * @return int|bool The product's stock, or false if an empty identifier or office ID was provided or if no stock was found in Bsale.
 	 * @throws \Exception If there was an error fetching the stock from Bsale.
+	 *
+	 * @link https://docs.bsale.dev/CL/stocks#get-un-stock-de-variante Bsale API documentation for the stock retrieval endpoint.
 	 */
 	public function get_stock_by_identifier( string $identifier, int $office_id ): bool|int {
 		if ( '' === $identifier || 0 === $office_id ) {
@@ -216,6 +218,8 @@ class API_Client {
 	 * @param array  $products  An array of products to consume the stock from. Each product must have an SKU and a 'quantity' key, and the 'quantity' must be greater than 0.
 	 *
 	 * @return bool True if the stock was consumed successfully for all the products. False if an empty note or office ID was provided, or if there was an error consuming the stock.
+	 *
+	 * @link https://docs.bsale.dev/CL/stocks#post-un-consumo-de-stock Bsale API documentation for the stock consumption endpoint.
 	 */
 	public function consume_stock( string $note, int $office_id, array $products ): bool {
 		if ( 0 === $office_id ) {
@@ -266,6 +270,8 @@ class API_Client {
 	 * @param array $document_data The data of the document to generate. The data must be in the format expected by the Bsale API.
 	 *
 	 * @return array The response data from Bsale. Will be empty if there was an error generating the document.
+	 *
+	 * @link https://docs.bsale.dev/CL/documentos/#post-un-documento Bsale API documentation for the document generation endpoint.
 	 */
 	public function generate_document( array $document_data ): array {
 		$api_endpoint = 'documents.json';
@@ -329,7 +335,8 @@ class API_Client {
 	 * @return array The list of offices that matches the name provided. Will be empty if no offices were found or if an empty name was provided.
 	 * @throws \Exception If there was an error fetching the list of offices from Bsale.
 	 *
-	 * @see \WC_Bsale\Bsale\API_Client::search_entities_by_name() For the implementation of the search.
+	 * @see  \WC_Bsale\Bsale\API_Client::search_entities_by_name() For the implementation of the search.
+	 * @link https://docs.bsale.dev/CL/sucursales#get-lista-de-sucursales Bsale API documentation for listing offices endpoint.
 	 */
 	public function search_offices_by_name( string $name ): array {
 		return $this->search_entities_by_name( $name, 'offices.json' );
@@ -343,7 +350,8 @@ class API_Client {
 	 * @return array The office's data. Will be empty if the office was not found, an empty ID was provided, or if the office is not active.
 	 * @throws \Exception If there was an error fetching the office from Bsale.
 	 *
-	 * @see \WC_Bsale\Bsale\API_Client::get_active_entity_by_id() For the implementation of how the office is fetched.
+	 * @see  \WC_Bsale\Bsale\API_Client::get_active_entity_by_id() For the implementation of how the office is fetched.
+	 * @link https://docs.bsale.dev/CL/sucursales#get-una-sucursal Bsale API documentation for the office retrieval endpoint.
 	 */
 	public function get_office_by_id( int $office_id ): array {
 		return $this->get_active_entity_by_id( $office_id, 'offices/' );
@@ -360,7 +368,9 @@ class API_Client {
 	 * @return array The list of document types that matches the name provided. Will be empty if no document types were found or if an empty name was provided.
 	 * @throws \Exception If there was an error fetching the list of document types from Bsale.
 	 *
-	 * @see \WC_Bsale\Bsale\API_Client::search_entities_by_name() For the implementation of the search.
+	 * @see  \WC_Bsale\Bsale\API_Client::search_entities_by_name() For the implementation of the search.
+	 * @link https://docs.bsale.dev/CL/tipos-de-documentos#get-lista-de-tipos-de-documentos Bsale API documentation for listing document types endpoint.
+	 * @link https://www.sii.cl/factura_electronica/formato_dte.pdf SII codes for electronic documents - Version 2.2 2019-07-10, page 41.
 	 */
 	public function search_invoice_document_types_by_name( string $name ): array {
 		return $this->search_entities_by_name( $name, 'document_types.json', array( 'codesii' => '39' ) );
@@ -374,7 +384,8 @@ class API_Client {
 	 * @return array The document type's data. Will be empty if the document type was not found, an empty ID was provided, or if the document type is not active.
 	 * @throws \Exception If there was an error fetching the document type from Bsale.
 	 *
-	 * @see \WC_Bsale\Bsale\API_Client::get_active_entity_by_id() For the implementation of how the document type is fetched.
+	 * @see  \WC_Bsale\Bsale\API_Client::get_active_entity_by_id() For the implementation of how the document type is fetched.
+	 * @link https://docs.bsale.dev/CL/tipos-de-documentos#get-un-tipo-de-documento Bsale API documentation for the document type retrieval endpoint.
 	 */
 	public function get_document_type_by_id( int $document_type_id ): array {
 		return $this->get_active_entity_by_id( $document_type_id, 'document_types/' );
@@ -388,7 +399,8 @@ class API_Client {
 	 * @return array The list of price lists that matches the name provided. Will be empty if no price lists were found or if an empty name was provided.
 	 * @throws \Exception If there was an error fetching the list of price lists from Bsale.
 	 *
-	 * @see \WC_Bsale\Bsale\API_Client::search_entities_by_name() For the implementation of the search.
+	 * @see  \WC_Bsale\Bsale\API_Client::search_entities_by_name() For the implementation of the search.
+	 * @link https://docs.bsale.dev/CL/listas-de-precio#get-listas-de-precio Bsale API documentation for listing price lists endpoint.
 	 */
 	public function search_price_lists_by_name( string $name ): array {
 		return $this->search_entities_by_name( $name, 'price_lists.json' );
@@ -402,7 +414,8 @@ class API_Client {
 	 * @return array The price list's data. Will be empty if the price list was not found, an empty ID was provided, or if the price list is not active.
 	 * @throws \Exception If there was an error fetching the price list from Bsale.
 	 *
-	 * @see \WC_Bsale\Bsale\API_Client::get_active_entity_by_id() For the implementation of how the price list is fetched.
+	 * @see  \WC_Bsale\Bsale\API_Client::get_active_entity_by_id() For the implementation of how the price list is fetched.
+	 * @link https://docs.bsale.dev/CL/listas-de-precio#get-una-lista-de-precio Bsale API documentation for the price list retrieval endpoint.
 	 */
 	public function get_price_list_by_id( int $price_list_id ): array {
 		return $this->get_active_entity_by_id( $price_list_id, 'price_lists/' );
@@ -416,7 +429,8 @@ class API_Client {
 	 * @return array The list of taxes that matches the name provided. Will be empty if no taxes were found or if an empty name was provided.
 	 * @throws \Exception If there was an error fetching the list of taxes from Bsale.
 	 *
-	 * @see \WC_Bsale\Bsale\API_Client::search_entities_by_name() For the implementation of the search.
+	 * @see  \WC_Bsale\Bsale\API_Client::search_entities_by_name() For the implementation of the search.
+	 * @link https://docs.bsale.dev/CL/impuestos#get-lista-de-impuestos Bsale API documentation for listing taxes endpoint.
 	 */
 	public function search_taxes_by_name( string $name ): array {
 		return $this->search_entities_by_name( $name, 'taxes.json' );
@@ -430,7 +444,8 @@ class API_Client {
 	 * @return array The tax's data. Will be empty if the tax was not found, an empty ID was provided, or if the tax is not active.
 	 * @throws \Exception If there was an error fetching the tax from Bsale.
 	 *
-	 * @see \WC_Bsale\Bsale\API_Client::get_active_entity_by_id() For the implementation of how the tax is fetched.
+	 * @see  \WC_Bsale\Bsale\API_Client::get_active_entity_by_id() For the implementation of how the tax is fetched.
+	 * @link https://docs.bsale.dev/CL/impuestos#get-un-impuesto Bsale API documentation for the tax retrieval endpoint.
 	 */
 	public function get_tax_by_id( int $tax_id ): array {
 		return $this->get_active_entity_by_id( $tax_id, 'taxes/' );
