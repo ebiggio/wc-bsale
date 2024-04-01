@@ -8,6 +8,9 @@
 
 namespace WC_Bsale\Bsale;
 
+use Exception;
+use WP_Error;
+
 defined( 'ABSPATH' ) || exit;
 
 /**
@@ -18,7 +21,7 @@ class API_Client {
 	private string $access_token;
 	private string $product_identifier;
 	private array|null $bsale_response = null;
-	private \WP_Error|null $bsale_wp_error = null;
+	private WP_Error|null $bsale_wp_error = null;
 
 	public function __construct() {
 		$this->api_url = 'https://api.bsale.io/v1/';
@@ -41,9 +44,9 @@ class API_Client {
 	private function make_request( string $endpoint, string $method = 'GET', array $body = null ): mixed {
 		// Check if the access token is set and throw an exception if it's not
 		if ( '' === $this->access_token ) {
-			$this->bsale_wp_error = new \WP_Error( 422, 'The Bsale API access token is not set.' );
+			$this->bsale_wp_error = new WP_Error( 422, 'The Bsale API access token is not set.' );
 
-			throw new \Exception( 'The Bsale API access token is not set.' );
+			throw new Exception( 'The Bsale API access token is not set.' );
 		}
 
 		$this->bsale_response = null;
@@ -69,13 +72,13 @@ class API_Client {
 				$response_body = json_decode( wp_remote_retrieve_body( $bsale_response ) );
 
 				if ( isset( $response_body->error ) ) {
-					$this->bsale_wp_error = new \WP_Error( wp_remote_retrieve_response_code( $bsale_response ), $response_body->error );
+					$this->bsale_wp_error = new WP_Error( wp_remote_retrieve_response_code( $bsale_response ), $response_body->error );
 				} else {
-					$this->bsale_wp_error = new \WP_Error( wp_remote_retrieve_response_code( $bsale_response ), wp_remote_retrieve_response_message( $bsale_response ) );
+					$this->bsale_wp_error = new WP_Error( wp_remote_retrieve_response_code( $bsale_response ), wp_remote_retrieve_response_message( $bsale_response ) );
 				}
 			}
 
-			throw new \Exception( 'Error making the request to the Bsale API: ' . $this->bsale_wp_error->get_error_message() );
+			throw new Exception( 'Error making the request to the Bsale API: ' . $this->bsale_wp_error->get_error_message() );
 		}
 
 		$this->bsale_response = $bsale_response;
@@ -103,7 +106,7 @@ class API_Client {
 	 *
 	 * @return \WP_Error|null The last error from Bsale as a \WP_Error object, or null if no request was made or if there was no error in the last request.
 	 */
-	public function get_last_wp_error(): \WP_Error|null {
+	public function get_last_wp_error(): WP_Error|null {
 		return $this->bsale_wp_error;
 	}
 
@@ -153,7 +156,7 @@ class API_Client {
 
 		try {
 			$entity = $this->make_request( $endpoint . $entity_id . '.json' );
-		} catch ( \Exception $e ) {
+		} catch ( Exception $e ) {
 			// If the error code is 404, it means that the entity was not found. That's a valid case, so we return an empty array. In any other situation, we throw the exception
 			if ( 404 !== $this->bsale_wp_error->get_error_code() ) {
 				throw $e;
@@ -242,7 +245,7 @@ class API_Client {
 
 		try {
 			$this->make_request( $api_endpoint, 'POST', $body );
-		} catch ( \Exception $e ) {
+		} catch ( Exception ) {
 			return false;
 		}
 
@@ -261,7 +264,7 @@ class API_Client {
 
 		try {
 			$bsale_response = $this->make_request( $api_endpoint, 'POST', $document_data );
-		} catch ( \Exception $e ) {
+		} catch ( Exception ) {
 			return array();
 		}
 
