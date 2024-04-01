@@ -42,7 +42,7 @@ class Ajax_Handler {
 	 * @see search_bsale_data()
 	 */
 	public static function search_bsale_document_types(): void {
-		search_bsale_data( 'search_document_types_by_name', __( 'There was an error getting the document types from Bsale', 'wc-bsale' ) );
+		search_bsale_data( 'search_invoice_document_types_by_name', __( 'There was an error getting the document types from Bsale', 'wc-bsale' ) );
 	}
 
 	/**

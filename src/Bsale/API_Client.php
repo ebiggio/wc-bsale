@@ -350,7 +350,10 @@ class API_Client {
 	}
 
 	/**
-	 * Searches for **active** document types in Bsale by their names and returns their IDs and names.
+	 * Searches for **active** electronic invoice document types in Bsale by their names and returns their IDs and names.
+	 *
+	 * The 'codesii' parameter is set to '39' to search for electronic invoice document types only.
+	 * This code is according to the SII (Servicio de Impuestos Internos), where 39 corresponds to electronic invoices.
 	 *
 	 * @param string $name The name of the document type to search for.
 	 *
@@ -359,8 +362,8 @@ class API_Client {
 	 *
 	 * @see \WC_Bsale\Bsale\API_Client::search_entities_by_name() For the implementation of the search.
 	 */
-	public function search_document_types_by_name( string $name ): array {
-		return $this->search_entities_by_name( $name, 'document_types.json' );
+	public function search_invoice_document_types_by_name( string $name ): array {
+		return $this->search_entities_by_name( $name, 'document_types.json', array( 'codesii' => '39' ) );
 	}
 
 	/**
