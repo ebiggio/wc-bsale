@@ -8,7 +8,9 @@
  * @package WC_Bsale
  */
 
-namespace WC_Bsale;
+namespace WC_Bsale\Admin;
+
+use WC_Bsale\Bsale\API_Client;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -97,7 +99,7 @@ function search_bsale_data( string $search_method, string $error_message ): void
 
 	$search_term = sanitize_text_field( $_GET['term'] );
 
-	$b_sale_api_client = new Bsale\API_Client();
+	$bsale_api_client = new API_Client();
 
 	if ( '' === $search_term ) {
 		wp_send_json( array( 'results' => array() ) );
@@ -106,7 +108,7 @@ function search_bsale_data( string $search_method, string $error_message ): void
 	}
 
 	try {
-		$search_results = $b_sale_api_client->$search_method( $search_term );
+		$search_results = $bsale_api_client->$search_method( $search_term );
 	} catch ( \Exception $e ) {
 		// Send an error message as a disabled option for the Select2 plugin
 		wp_send_json( array(

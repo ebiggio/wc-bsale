@@ -10,7 +10,6 @@ namespace WC_Bsale\Admin;
 
 defined( 'ABSPATH' ) || exit;
 
-use WC_Bsale\Ajax_Handler;
 use const WC_Bsale\PLUGIN_URL;
 
 /**
