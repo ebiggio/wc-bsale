@@ -138,7 +138,7 @@ class Invoice_Settings implements Setting_Interface {
 
 			try {
 				$entity = $bsale_api_client->$api_method( $entity_id );
-			} catch ( \Exception $e ) {
+			} catch ( \Exception ) {
 				$entity = null;
 			}
 
@@ -357,7 +357,7 @@ class Invoice_Settings implements Setting_Interface {
 			<div class="wc-bsale-notice wc-bsale-notice-info">
 				<p>
 					<span class="dashicons dashicons-visibility"></span>
-					<?php esc_html_e( 'If you don\'t see the document type you are looking for, please make sure it is active and its name is not empty.', 'wc-bsale' ); ?>
+					<?php esc_html_e( 'If you don\'t see the document type you are looking for, please make sure it is active and its name is not empty. Only electronic invoice document types will be shown.', 'wc-bsale' ); ?>
 				</p>
 			</div>
 		</fieldset>
