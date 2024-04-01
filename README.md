@@ -1,4 +1,4 @@
-# ![Bsale Icon](/assets/images/bsale_icon.png) WooCommerce Bsale Integration Plugin
+# ![Bsale Icon](/assets/images/bsale_icon.png) WooCommerce Bsale Integration Plugin for Chile
 
 *Version: 0.5.0*
 

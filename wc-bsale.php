@@ -1,6 +1,6 @@
 <?php
 /*
-Plugin Name: WooCommerce Bsale Integration
+Plugin Name: WooCommerce Bsale Integration for Chile
 Plugin URI: https://github.com/ebiggio/wc-bsale
 Description: WooCommerce plugin to integrate with the Bsale system, allowing you to sync product stocks, prices and generate electronic invoices.
 Version: 0.5.0

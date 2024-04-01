@@ -40,6 +40,12 @@ class Footer {
 				);
 				?>
 			</p>
+			<small>
+				<?php
+				printf(
+					esc_html__( 'Please note that this integration is intended to be used by WooCommerce stores for the chilean market.', 'wc-bsale' ));
+				?>
+			</small>
 			<p style="text-align: right">
 				<?php
 				printf(
