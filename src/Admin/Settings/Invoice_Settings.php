@@ -438,6 +438,12 @@ class Invoice_Settings implements Setting_Interface {
 			</select>
 			<p class="description"><?php esc_html_e( 'This tax will be used to calculate the net price of the products. That net price will be then send to Bsale in the invoice details.', 'wc-bsale' ); ?></p>
 		</fieldset>
+		<div class="wc-bsale-notice wc-bsale-notice-warning">
+			<p>
+				<span class="dashicons dashicons-warning"></span>
+				<?php esc_html_e( 'If you don\'t select a tax, the electronic invoice will be generated as an exempt invoice.', 'wc-bsale' ); ?>
+			</p>
+		</div>
 		<div class="wc-bsale-notice wc-bsale-notice-info">
 			<p>
 				<span class="dashicons dashicons-visibility"></span>

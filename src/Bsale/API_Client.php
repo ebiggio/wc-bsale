@@ -288,8 +288,13 @@ class API_Client {
 			unset( $invoice_data['priceListId'] );
 		}
 
-		// Replace the identifier key with the configured product identifier
+		// Format the tax IDs if they are set, and replace the identifier key with the configured product identifier (code or barcode)
 		foreach ( $invoice_data['details'] as $key => $item ) {
+			// Check if there are any taxes set for the item. If there are, we need to format them as Bsale expects them (a string surrounded by square brackets)
+			if ( isset( $item['taxId'] ) ) {
+				$invoice_data['details'][ $key ]['taxId'] = '[' . implode( ',', $item['taxId'] ) . ']';
+			}
+
 			// Check if an identifier is set. If it's not, we don't need to do anything, since it means that the product is not in Bsale and the item must be declared "as is"
 			if ( ! isset( $item['identifier'] ) ) {
 				continue;
@@ -301,8 +306,6 @@ class API_Client {
 			$invoice_data['details'][ $key ][ $product_identifier ] = $item['identifier'];
 			unset( $invoice_data['details'][ $key ]['identifier'] );
 		}
-
-		error_log( 'invoice_data: ' . json_encode( $invoice_data ) );
 
 		return $this->generate_document( $invoice_data );
 	}
