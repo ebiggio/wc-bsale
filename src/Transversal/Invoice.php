@@ -10,7 +10,7 @@ namespace WC_Bsale\Transversal;
 
 defined( 'ABSPATH' ) || exit;
 
-use WC_Bsale\Admin\Settings\Invoice_Settings;
+use WC_Bsale\Admin\Settings\Invoice as Invoice_Settings;
 use WC_Bsale\Bsale\API_Client;
 use WC_Bsale\DB_Logger;
 use WC_Bsale\Interfaces\API_Consumer;
@@ -29,7 +29,7 @@ class Invoice implements API_Consumer {
 	 */
 	private array $observers = array();
 	/**
-	 * The invoice settings, loaded from the Invoice_Settings class.
+	 * The invoice settings, loaded from the Invoice class in the admin settings.
 	 *
 	 * @see Invoice_Settings
 	 *
@@ -207,8 +207,8 @@ class Invoice implements API_Consumer {
 		$bsale_invoice_details = $bsale_api->generate_invoice( $invoice_data );
 
 		if ( $bsale_invoice_details ) {
-			// Save the invoice details in the order meta data, adding the date and time of the invoice generation
-			$bsale_invoice_details['wc_bsale_generated_at'] = current_time( 'mysql' );
+			// Save the invoice details in the order meta data, adding the timestamp of the invoice generation
+			$bsale_invoice_details['wc_bsale_generated_at'] = current_time( 'U' );
 
 			update_post_meta( $order_id, '_wc_bsale_invoice_details', $bsale_invoice_details );
 

@@ -1,6 +1,6 @@
 <?php
 /**
- * Invoice settings for the plugin.
+ * Handles the invoice settings page and provides access to the settings stored in the database.
  *
  * @class   Invoice
  * @package WC_Bsale
@@ -15,7 +15,10 @@ use WC_Bsale\Interfaces\Setting as Setting_Interface;
 use const WC_Bsale\PLUGIN_URL;
 
 /**
- * Class Invoice_Settings
+ * Invoice settings class
+ *
+ * Displays the invoice settings page and handles the validation of the data from the form.
+ * Provides access to the settings stored in the database, or a set of default settings if the settings are not found.
  */
 class Invoice implements Setting_Interface {
 	private array|bool $settings = false;
