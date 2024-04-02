@@ -2,7 +2,7 @@
 /**
  * Invoice settings for the plugin.
  *
- * @class   Invoice_Settings
+ * @class   Invoice
  * @package WC_Bsale
  */
 
@@ -17,7 +17,7 @@ use const WC_Bsale\PLUGIN_URL;
 /**
  * Class Invoice_Settings
  */
-class Invoice_Settings implements Setting_Interface {
+class Invoice implements Setting_Interface {
 	private array|bool $settings = false;
 	private array|null $selected_document_type = null;
 	private array|null $selected_office = null;

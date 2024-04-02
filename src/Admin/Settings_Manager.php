@@ -39,10 +39,10 @@ class Settings_Manager {
 	 */
 	public function init_settings(): void {
 		$this->settings_classes_map = array(
-			'main'    => new Settings\Main_Settings(),
-			'stock'   => new Settings\Stock_Settings(),
-			'invoice' => new Settings\Invoice_Settings(),
-			'cron'    => new Settings\Cron_Settings()
+			'main'    => new Settings\Main(),
+			'stock'   => new Settings\Stock(),
+			'invoice' => new Settings\Invoice(),
+			'cron'    => new Settings\Cron()
 		);
 
 		register_setting( 'wc_bsale_main_settings_group', 'wc_bsale_main', array( $this->settings_classes_map['main'], 'validate_settings' ) );

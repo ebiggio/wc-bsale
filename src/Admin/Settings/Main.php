@@ -2,7 +2,7 @@
 /**
  * Main settings page.
  *
- * @class   Main_Settings
+ * @class   Main
  * @package WC_Bsale
  */
 
@@ -13,9 +13,9 @@ defined( 'ABSPATH' ) || exit;
 use WC_Bsale\Interfaces\Setting as Setting_Interface;
 
 /**
- * Main_Settings class
+ * Main settings class
  */
-class Main_Settings implements Setting_Interface {
+class Main implements Setting_Interface {
 	private array|bool $settings = array();
 
 	public function __construct() {

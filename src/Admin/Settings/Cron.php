@@ -2,7 +2,7 @@
 /**
  * Cron settings page.
  *
- * @class   Cron_Settings
+ * @class   Cron
  * @package WC_Bsale
  */
 
@@ -15,9 +15,9 @@ use WC_Bsale\Interfaces\Setting as Setting_Interface;
 use const WC_Bsale\PLUGIN_URL;
 
 /**
- * Cron_Settings class
+ * Cron settings class
  */
-class Cron_Settings implements Setting_Interface {
+class Cron implements Setting_Interface {
 	private array|bool $settings;
 	private array $valid_cron_times = array(
 		'0000' => '00:00',

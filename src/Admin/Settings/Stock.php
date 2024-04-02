@@ -2,7 +2,7 @@
 /**
  * Stock settings page.
  *
- * @class   Stock_Settings
+ * @class   Stock
  * @package WC_Bsale
  */
 
@@ -15,9 +15,9 @@ use WC_Bsale\Interfaces\Setting as Setting_Interface;
 use const WC_Bsale\PLUGIN_URL;
 
 /**
- * Stock_Settings class
+ * Stock settings class
  */
-class Stock_Settings implements Setting_Interface {
+class Stock implements Setting_Interface {
 	private array|bool $settings;
 	/**
 	 * The selected office stored in the settings, with its ID and name. Used to set the selected option in the select element. Null if no office is selected.
