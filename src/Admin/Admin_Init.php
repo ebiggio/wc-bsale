@@ -28,6 +28,9 @@ class Admin_Init {
 
 		// Load the AJAX handlers
 		new Ajax_Handler();
+
+		// Load the meta boxes
+		new Meta_Boxes\Invoice();
 	}
 
 	/**
