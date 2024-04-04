@@ -168,7 +168,7 @@ class Invoice implements API_Consumer {
 
 			$invoice_details[] = array(
 				'identifier'   => $product->get_sku(),
-				'netUnitValue' => round( $net_unit_value ),
+				'netUnitValue' => round( $net_unit_value, 2 ),
 				'quantity'     => $item->get_quantity()
 			);
 		}
@@ -177,7 +177,7 @@ class Invoice implements API_Consumer {
 		if ( $shipping_cost > 0 ) {
 			$invoice_details[] = array(
 				'comment'      => __( 'Shipping cost', 'wc-bsale' ),
-				'netUnitValue' => round( $shipping_cost ),
+				'netUnitValue' => round( $shipping_cost, 2 ),
 				'quantity'     => 1,
 				// We must send the tax ID as an array, even if it's just one tax
 				'taxId'        => array( $tax_id )
