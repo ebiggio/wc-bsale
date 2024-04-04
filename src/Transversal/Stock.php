@@ -153,9 +153,11 @@ class Stock implements API_Consumer {
 
 		// Consume stock in Bsale
 		if ( $this->consume_bsale_stock( $order->get_order_number(), $products_to_consume_stock ) ) {
-			// Set a custom meta key to indicate that the stock was consumed in Bsale
+			// Set a custom meta key to indicate that the stock was consumed in Bsale, with the timestamp of the operation
+			$operation_timestamp = current_time( 'timestamp' );
+
 			foreach ( $items_to_update_meta as $item ) {
-				$item->add_meta_data( '_wc_bsale_stock_consumed', true, true );
+				$item->add_meta_data( '_wc_bsale_stock_consumed', $operation_timestamp, true );
 				$item->save_meta_data();
 			}
 		}
