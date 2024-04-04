@@ -10,7 +10,6 @@ namespace WC_Bsale\Transversal;
 
 defined( 'ABSPATH' ) || exit;
 
-use WC_Bsale\Admin\Settings\Invoice as Invoice_Settings;
 use WC_Bsale\Bsale\API_Client;
 use WC_Bsale\DB_Logger;
 use WC_Bsale\Interfaces\API_Consumer;
@@ -31,7 +30,7 @@ class Invoice implements API_Consumer {
 	/**
 	 * The invoice settings, loaded from the Invoice class in the admin settings.
 	 *
-	 * @see Invoice_Settings
+	 * @see \WC_Bsale\Admin\Settings\Invoice Invoice settings class
 	 *
 	 * @var array
 	 */
@@ -42,7 +41,7 @@ class Invoice implements API_Consumer {
 		$this->add_observer( DB_Logger::get_instance() );
 
 		// Get the invoice settings
-		$this->settings = Invoice_Settings::get_instance()->get_settings();
+		$this->settings = \WC_Bsale\Admin\Settings\Invoice::get_instance()->get_settings();
 
 		$this->register_invoice_hooks();
 	}

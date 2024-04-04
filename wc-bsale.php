@@ -15,10 +15,6 @@ namespace WC_Bsale;
 // Prevent direct access to this file
 defined( 'ABSPATH' ) || exit;
 
-use WC_Bsale\Transversal\Transversal_Init;
-use WC_Bsale\Admin\Admin_Init;
-use WC_Bsale\Storefront\Storefront_Init;
-
 // Check if this plugin is active
 if ( ! in_array( 'wc-bsale/wc-bsale.php', apply_filters( 'active_plugins', get_option( 'active_plugins' ) ) ) ) {
 	return;
@@ -58,10 +54,10 @@ add_action( 'wc_bsale_cron', array( new Cron(), 'run' ) );
 // And away we go
 // --------------
 // Load the transversal hooks, which are hooks that can be fired both from the storefront or the admin side
-new Transversal_Init();
+new Transversal\Transversal_Init();
 
 if ( is_admin() ) {
-	new Admin_Init();
+	new Admin\Admin_Init();
 } else {
-	new Storefront_Init();
+	new Storefront\Storefront_Init();
 }
