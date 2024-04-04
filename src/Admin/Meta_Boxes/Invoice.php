@@ -33,7 +33,7 @@ class Invoice {
 	private array $settings;
 
 	public function __construct() {
-		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_wc_bsale_assets' ) );
+		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_assets' ) );
 
 		add_action( 'add_meta_boxes', array( $this, 'add_meta_box' ) );
 
@@ -47,7 +47,7 @@ class Invoice {
 	 *
 	 * @return void
 	 */
-	public function enqueue_wc_bsale_assets( string $hook_suffix ): void {
+	public function enqueue_assets( string $hook_suffix ): void {
 		global $post_type;
 		if ( 'post.php' === $hook_suffix && 'shop_order' === $post_type ) {
 			wp_enqueue_style( 'wc-bsale-admin', PLUGIN_URL . 'assets/css/wc-bsale.css', array(), PLUGIN_VERSION );
@@ -92,7 +92,9 @@ class Invoice {
 		<div>
 			<?php if ( $invoice_data ) :
 				$timezone_string = get_option( 'timezone_string' ) ?: 'UTC';
-				$generated_date = new \WC_DateTime( $invoice_data['wc_bsale_generated_at'], new DateTimeZone( $timezone_string ) );
+				$generated_date = new \WC_DateTime();
+				$generated_date->setTimestamp( $invoice_data['wc_bsale_generated_at'] );
+				$generated_date->setTimezone( new DateTimeZone( $timezone_string ) );
 				?>
 				<div class="wc-bsale-notice wc-bsale-notice-success">
 					<p>
