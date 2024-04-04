@@ -58,7 +58,7 @@
 }
 
 .wc-bsale-footer {
-margin-top: 20px;
+    margin-top: 20px;
     padding: 10px;
     background-color: #e7e7e7;
     border-top: 1px solid #c3c4c7;
@@ -70,4 +70,13 @@ margin-top: 20px;
     background-position: left center;
     padding-left: 30px;
     margin-left: 10px;
+}
+
+.wc-bsale-stock-consumed {
+    display: inline-block;
+    background-color: #f2f2f2;
+    color: #8a7e7e;
+    padding: 4px 10px;
+    border-radius: 15px;
+    font-size: 12px;
 }
