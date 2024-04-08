@@ -15,11 +15,6 @@ namespace WC_Bsale;
 // Prevent direct access to this file
 defined( 'ABSPATH' ) || exit;
 
-// Check if this plugin is active
-if ( ! in_array( 'wc-bsale/wc-bsale.php', apply_filters( 'active_plugins', get_option( 'active_plugins' ) ) ) ) {
-	return;
-}
-
 const PLUGIN_VERSION = '0.5.0';
 const PLUGIN_DIR     = __DIR__;
 define( "WC_Bsale\PLUGIN_URL", plugin_dir_url( __FILE__ ) );
