@@ -341,7 +341,7 @@ class Stock implements Setting_Interface {
 				<input type="radio" name="wc_bsale_transversal[order_event]" value="custom" <?php checked( 'custom', $this->settings['transversal']['order_event'] ?? 'wc' ); ?> />
 				When the order status changes to:
 			</label>
-			<select id="wc_bsale_transversal_order_status" name="wc_bsale_transversal[order_status][]" multiple="multiple">
+			<select id="wc_bsale_transversal_order_status" name="wc_bsale_transversal[order_status][]" multiple="multiple" style="width: 50%">
 				<?php
 				$selected_statuses = $this->settings['transversal']['order_status'] ?? array( 'wc-processing' );
 				foreach ( wc_get_order_statuses() as $status => $label ) {
