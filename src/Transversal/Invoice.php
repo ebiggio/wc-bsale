@@ -223,7 +223,7 @@ class Invoice implements API_Consumer {
 
 		if ( $bsale_invoice_details ) {
 			// Save the invoice details in the order meta data, adding the timestamp of the invoice generation
-			$bsale_invoice_details['wc_bsale_generated_at'] = current_time( 'U' );
+			$bsale_invoice_details['wc_bsale_generated_at'] = current_time( 'timestamp', true );
 
 			update_post_meta( $order_id, '_wc_bsale_invoice_details', $bsale_invoice_details );
 
