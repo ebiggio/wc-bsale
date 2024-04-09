@@ -10,6 +10,7 @@ namespace WC_Bsale\Transversal;
 
 defined( 'ABSPATH' ) || exit;
 
+use JetBrains\PhpStorm\NoReturn;
 use WC_Bsale\Bsale\API_Client;
 use WC_Bsale\DB_Logger;
 use WC_Bsale\Interfaces\API_Consumer;
@@ -17,6 +18,11 @@ use WC_Bsale\Interfaces\Observer;
 
 /**
  * Invoice class
+ *
+ * Manages the invoice generation in Bsale.
+ *
+ * This class is responsible for generating the invoice in Bsale when the order status changes to the one configured in the plugin options.
+ * It also provides a method to generate an invoice manually, by intercepting a GET request with the "wc_bsale_generate_invoice" action.
  */
 class Invoice implements API_Consumer {
 	/**
@@ -44,6 +50,9 @@ class Invoice implements API_Consumer {
 		$this->settings = \WC_Bsale\Admin\Settings\Invoice::get_instance()->get_settings();
 
 		$this->register_invoice_hooks();
+
+		// "Intercepts" a GET request with the "wc_bsale_generate_invoice" action to generate the invoice
+		add_action( 'admin_post_wc_bsale_generate_invoice', array( $this, 'process_get_request' ) );
 	}
 
 	/**
@@ -81,17 +90,17 @@ class Invoice implements API_Consumer {
 	 * Generates an invoice in Bsale according to the order details of the given order ID.
 	 *
 	 * Won't generate an invoice if the order has already been invoiced (checked by the '_wc_bsale_invoice_details' meta data).
+	 * If the invoice is successfully generated, the invoice details will be saved in the order meta data with the '_wc_bsale_invoice_details' key.
 	 *
 	 * @param int $order_id The order ID.
 	 *
-	 * @return void
-	 * @throws \Exception If there is an error getting the tax data from Bsale.
+	 * @return bool True if the invoice was successfully generated, false otherwise.
 	 */
-	public function generate_invoice( int $order_id ): void {
+	public function generate_invoice( int $order_id ): bool {
 		$order = wc_get_order( $order_id );
 
 		if ( ! $order ) {
-			return;
+			return false;
 		}
 
 		// Check if the order has already been invoiced
@@ -100,7 +109,7 @@ class Invoice implements API_Consumer {
 		if ( $bsale_invoice_details ) {
 			$this->notify_observers( 'generate_invoice', 'invoice', $order_id, __( 'The order has already been invoiced in Bsale' ) );
 
-			return;
+			return false;
 		}
 
 		// Get the tax information from Bsale. This is needed to calculate the net unit value of the products
@@ -113,14 +122,14 @@ class Invoice implements API_Consumer {
 		} catch ( \Exception $e ) {
 			$this->notify_observers( 'generate_invoice', 'invoice', $order_id, __( 'Error getting the tax data from Bsale: )' . $e->getMessage() ), 'error' );
 
-			return;
+			return false;
 		}
 
 		if ( ! $tax_data ) {
 			// We need the tax data to calculate the net unit value. Without it, we can't generate the invoice
 			$this->notify_observers( 'generate_invoice', 'invoice', $order_id, __( 'Error getting the tax data from Bsale: The tax data was not found' ), 'error' );
 
-			return;
+			return false;
 		}
 
 		// Get the shipping cost and calculate its value without the tax
@@ -186,8 +195,15 @@ class Invoice implements API_Consumer {
 
 		// Emission and expiration date must be a UNIX timestamp of the current date, with the time set to 00:00:00
 		$wordpress_timezone = get_option( 'timezone_string' ) ?: 'UTC';
-		$current_date       = new \DateTime( 'now', new \DateTimeZone( $wordpress_timezone ) );
-		$current_date->setTime( 0, 0 );
+		try {
+			$current_date = new \DateTime( 'now', new \DateTimeZone( $wordpress_timezone ) );
+		} catch ( \Exception $e ) {
+			$this->notify_observers( 'generate_invoice', 'invoice', $order_id, __( 'Error creating the DateTime object: ' . $e->getMessage() ), 'error' );
+
+			return false;
+		}
+
+		$current_date->setTime( 0, 0, 0 );
 
 		$invoice_data = array(
 			'documentTypeId' => (int) $this->settings['document_type'],
@@ -212,10 +228,51 @@ class Invoice implements API_Consumer {
 			update_post_meta( $order_id, '_wc_bsale_invoice_details', $bsale_invoice_details );
 
 			$this->notify_observers( 'generate_invoice', 'invoice', $order_id, __( 'Invoice successfully generated in Bsale' ), 'success' );
+
+			return true;
 		} else {
 			$bsale_error = $bsale_api->get_last_wp_error();
 
 			$this->notify_observers( 'generate_invoice', 'invoice', $order_id, __( 'Error generating the invoice in Bsale: ' . $bsale_error->get_error_message() ), 'error' );
+
+			return false;
 		}
+	}
+
+	/**
+	 * Processes a GET request to generate an invoice.
+	 *
+	 * This method is called when a GET request is made with the "wc_bsale_generate_invoice" action.
+	 * It will generate the invoice for the order ID provided in the request, if the user has the necessary permissions and the nonce is valid.
+	 *
+	 * @return void This method doesn't return anything. It will redirect the user to the order edit page after processing the request.
+	 */
+	#[NoReturn] public function process_get_request(): void {
+		if ( ! isset( $_GET['post_id'] ) || ! isset( $_GET['_wpnonce'] ) ) {
+			wp_die( __( 'Invalid request', 'wc-bsale' ) );
+		}
+
+		$post_id = absint( $_GET['post_id'] );
+
+		if ( ! current_user_can( 'edit_post', $post_id ) ) {
+			wp_die( __( 'You are not allowed to generate invoices', 'wc-bsale' ) );
+		}
+
+		if ( ! wp_verify_nonce( $_GET['_wpnonce'], 'wc_bsale_generate_invoice' ) ) {
+			wp_die( __( 'Invalid nonce', 'wc-bsale' ) );
+		}
+
+		$bsale_invoice = $this->generate_invoice( $post_id );
+
+		if ( $bsale_invoice ) {
+			// Set a transient that can be used to show a success message
+			set_transient( 'wc_bsale_invoice_success', __( 'Invoice generated successfully', 'wc-bsale' ), 5 );
+		} else {
+			// Set a transient for the error message
+			set_transient( 'wc_bsale_invoice_error', __( 'Error generating the invoice', 'wc-bsale' ), 5 );
+		}
+
+		wp_safe_redirect( admin_url( 'post.php?post=' . $post_id . '&action=edit' ) );
+		exit;
 	}
 }
