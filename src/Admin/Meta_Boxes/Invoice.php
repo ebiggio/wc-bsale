@@ -8,7 +8,6 @@
 
 namespace WC_Bsale\Admin\Meta_Boxes;
 
-use DateTimeZone;
 use const WC_Bsale\PLUGIN_URL;
 use const WC_Bsale\PLUGIN_VERSION;
 
@@ -22,6 +21,8 @@ defined( 'ABSPATH' ) || exit;
  * - The invoice number.
  * - A link to view the invoice in Bsale (provided by the Bsale, as a PDF).
  * - The total amount of the invoice.
+ *
+ * If the invoice has not been generated yet and the order status is the one configured in the plugin settings, it will display a button to generate the invoice.
  */
 class Invoice {
 	/**
@@ -38,6 +39,34 @@ class Invoice {
 		add_action( 'add_meta_boxes', array( $this, 'add_meta_box' ) );
 
 		$this->settings = \WC_Bsale\Admin\Settings\Invoice::get_instance()->get_settings();
+
+		// Check for the success transient to show a success message if an invoice was generated successfully
+		if ( get_transient( 'wc_bsale_invoice_success' ) ) {
+			add_action( 'admin_notices', function () {
+				?>
+				<div class="notice notice-success">
+					<p><?php _e( 'The invoice has been successfully generated in Bsale.', 'wc-bsale' ); ?></p>
+				</div>
+				<?php
+			} );
+
+			delete_transient( 'wc_bsale_invoice_success' );
+		}
+
+		// Check for the error transient to show an error message if there was an error generating an invoice
+		$error_message = get_transient( 'wc_bsale_invoice_error' );
+		if ( $error_message ) {
+			add_action( 'admin_notices', function () use ( $error_message ) {
+				?>
+				<div class="notice notice-error">
+					<p><?php _e( 'There was an error generating the invoice:', 'wc-bsale' ); ?></p>
+					<p><strong><?php echo esc_html( $error_message ); ?></strong></p>
+				</div>
+				<?php
+			} );
+
+			delete_transient( 'wc_bsale_invoice_error' );
+		}
 	}
 
 	/**
@@ -51,6 +80,9 @@ class Invoice {
 		global $post_type;
 		if ( 'post.php' === $hook_suffix && 'shop_order' === $post_type ) {
 			wp_enqueue_style( 'wc-bsale-admin', PLUGIN_URL . 'assets/css/wc-bsale.css', array(), PLUGIN_VERSION );
+
+			// Add the Thickbox script for the confirmation dialog
+			add_thickbox();
 		}
 	}
 
@@ -94,7 +126,7 @@ class Invoice {
 				$timezone_string = get_option( 'timezone_string' ) ?: 'UTC';
 				$generated_date = new \WC_DateTime();
 				$generated_date->setTimestamp( $invoice_data['wc_bsale_generated_at'] );
-				$generated_date->setTimezone( new DateTimeZone( $timezone_string ) );
+				$generated_date->setTimezone( new \DateTimeZone( $timezone_string ) );
 				?>
 				<div class="wc-bsale-notice wc-bsale-notice-success">
 					<p>
@@ -125,10 +157,33 @@ class Invoice {
 							<?php _e( 'The invoice has not been generated yet.', 'wc-bsale' ); ?>
 						</p>
 					</div>
-					<p>
-						<?php _e( 'The invoice will be automatically generated when the order status changes to ', 'wc-bsale' ); ?>
-						<strong><?php echo esc_html( $configured_order_status_name ); ?></strong>.
-					</p>
+					<?php if ( $order->get_status() === substr( $configured_order_status, 3 ) ) : ?>
+						<p>
+							<?php _e( 'You can use the following button to generate the invoice in Bsale. ', 'wc-bsale' ); ?>
+						</p>
+						<p style="text-align: center">
+							<input type="button" class="button button-primary" value="<?php _e( 'Generate invoice', 'wc-bsale' ); ?>"
+								   onclick="tb_show('<?php _e( 'Generate invoice in Bsale?', 'wc-bsale' ); ?>', '#TB_inline?width=280&height=140&inlineId=wc_bsale_generate_invoice_confirmation');">
+						</p>
+						<!-- Confirmation dialog -->
+						<div id="wc_bsale_generate_invoice_confirmation" style="display: none;">
+							<p><?php _e( 'This action will generate the invoice in Bsale. Are you sure you want to continue?', 'wc-bsale' ); ?></p>
+							<p>
+								<a href="<?php echo esc_url( admin_url( 'admin-post.php?action=wc_bsale_generate_invoice&post_id=' . $post->ID ) ); ?>&_wpnonce=<?php echo wp_create_nonce( 'wc_bsale_generate_invoice' ); ?>"
+								   class="button button-primary">
+									<?php _e( 'Yes, generate the invoice', 'wc-bsale' ); ?>
+								</a>
+								<a href="#" class="button button-secondary" onclick="tb_remove();">
+									<?php _e( 'No, cancel', 'wc-bsale' ); ?>
+								</a>
+							</p>
+						</div>
+					<?php else : ?>
+						<p>
+							<?php _e( 'The invoice will be automatically generated when the order status changes to ', 'wc-bsale' ); ?>
+							<strong><?php echo esc_html( $configured_order_status_name ); ?></strong>.
+						</p>
+					<?php endif; ?>
 				<?php else : ?>
 					<div class="wc-bsale-notice wc-bsale-notice-info">
 						<p>
