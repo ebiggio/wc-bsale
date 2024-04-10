@@ -65,7 +65,7 @@ class Settings_Manager {
 	public function display_settings_page(): void {
 		// Check if the user has the necessary permissions to access the settings
 		if ( ! current_user_can( 'manage_options' ) ) {
-			return;
+			wp_die( esc_html__( 'You do not have sufficient permissions to access this page.' ) );
 		}
 
 		// Set a success message if the settings were saved
