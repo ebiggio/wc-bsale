@@ -76,7 +76,7 @@ class Main implements Setting_Interface {
 	 * @inheritdoc
 	 */
 	public function get_setting_title(): string {
-		return __('Main settings', 'wc-bsale');
+		return __( 'Main settings', 'wc-bsale' );
 	}
 
 	/**
@@ -171,9 +171,5 @@ class Main implements Setting_Interface {
 			</label>
 		</fieldset>
 		<?php
-	}
-
-	public function get_access_token(): string {
-		return $this->settings['sandbox_access_token'];
 	}
 }
