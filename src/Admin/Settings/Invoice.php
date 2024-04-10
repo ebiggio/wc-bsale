@@ -128,68 +128,53 @@ class Invoice implements Setting_Interface {
 	}
 
 	/**
-	 * Loads a Bsale entity from the API.
+	 * Loads the entities details from Bsale according to the settings, and stores them in the corresponding properties.
 	 *
-	 * @param int    $entity_id  The ID of the entity to load.
-	 * @param string $api_method The method to call in the Bsale API client.
+	 * The data of these entities is used to populate the select fields in the settings page if a value was previously selected.
 	 *
-	 * @return array The entity data. If the entity is not found, an empty array is returned.
+	 * @return void
 	 */
-	private function load_bsale_entity( int $entity_id, string $api_method ): array {
-		if ( $entity_id ) {
-			$bsale_api_client = new API_Client();
+	private function load_bsale_entities(): void {
+		/*
+		 * Array with the entities to load from Bsale.
+		 * The key is the name of the property to store the entity data, and the value is an array with the entity ID setting key and the method to call in the Bsale API client.
+		 */
+		$entities = array(
+			'selected_document_type' => array(
+				'document_type',
+				'get_document_type_by_id'
+			),
+			'selected_office'        => array(
+				'office_id',
+				'get_office_by_id'
+			),
+			'selected_price_list'    => array(
+				'price_list_id',
+				'get_price_list_by_id'
+			),
+			'selected_tax'           => array(
+				'tax_id',
+				'get_tax_by_id'
+			)
+		);
 
-			try {
-				$entity = $bsale_api_client->$api_method( $entity_id );
-			} catch ( \Exception ) {
-				$entity = null;
-			}
+		$bsale_api_client = new API_Client();
 
-			if ( $entity ) {
-				return array(
-					'id'   => $entity['id'],
-					'text' => $entity['name']
-				);
+		foreach ( $entities as $property => $entity_data ) {
+			// Gets the entity ID from the settings according to its key
+			$entity_id  = (int) $this->settings[ $entity_data[0] ];
+
+			if ( $entity_id ) {
+				try {
+					// Calls the corresponding method in the Bsale API client to get the entity data
+					$this->$property = $bsale_api_client->{$entity_data[1]}( $entity_id );
+				} catch ( \Exception ) {
+					$this->$property = array();
+				}
+			} else {
+				$this->$property = array();
 			}
 		}
-
-		return array();
-	}
-
-	/**
-	 * Gets the document type data from Bsale for the document type ID stored in the settings.
-	 *
-	 * @return void
-	 */
-	private function load_bsale_document_type(): void {
-		$this->selected_document_type = $this->load_bsale_entity( (int) $this->settings['document_type'], 'get_document_type_by_id' );
-	}
-
-	/**
-	 * Gets the office data from Bsale for the office ID stored in the settings.
-	 *
-	 * @return void
-	 */
-	private function load_bsale_office(): void {
-		$this->selected_office = $this->load_bsale_entity( (int) $this->settings['office_id'], 'get_office_by_id' );
-	}
-
-	/**
-	 * Gets the price list data from Bsale for the price list ID stored in the settings.
-	 *
-	 * @return void
-	 */
-	private function load_bsale_price_list(): void {
-		$this->selected_price_list = $this->load_bsale_entity( (int) $this->settings['price_list_id'], 'get_price_list_by_id' );
-	}
-
-	/**
-	 * Gets the tax data from Bsale for the tax ID stored in the settings.
-	 *
-	 * @return void
-	 */
-	private function load_bsale_tax(): void {
-		$this->selected_tax = $this->load_bsale_entity( (int) $this->settings['tax_id'], 'get_tax_by_id' );
 	}
 
 	/**
@@ -199,10 +184,7 @@ class Invoice implements Setting_Interface {
 	 */
 	public function display_settings(): void {
 		$this->load_page_resources();
-		$this->load_bsale_document_type();
-		$this->load_bsale_office();
-		$this->load_bsale_price_list();
-		$this->load_bsale_tax();
+		$this->load_bsale_entities();
 
 		add_settings_section(
 			'wc_bsale_invoice_section',
@@ -346,7 +328,7 @@ class Invoice implements Setting_Interface {
 					data-ajax-action="search_bsale_document_types" style="width: 50%">
 				<?php
 				if ( $this->selected_document_type ) {
-					echo '<option value="' . $this->selected_document_type['id'] . '" selected>' . $this->selected_document_type['text'] . '</option>';
+					echo '<option value="' . $this->selected_document_type['id'] . '" selected>' . $this->selected_document_type['name'] . '</option>';
 				}
 				?>
 			</select>
@@ -380,7 +362,7 @@ class Invoice implements Setting_Interface {
 					data-ajax-action="search_bsale_offices" style="width: 50%">
 				<?php
 				if ( $this->selected_office ) {
-					echo '<option value="' . $this->selected_office['id'] . '" selected>' . $this->selected_office['text'] . '</option>';
+					echo '<option value="' . $this->selected_office['id'] . '" selected>' . $this->selected_office['name'] . '</option>';
 				}
 				?>
 			</select>
@@ -408,7 +390,7 @@ class Invoice implements Setting_Interface {
 					data-ajax-action="search_bsale_price_lists" style="width: 50%">
 				<?php
 				if ( $this->selected_price_list ) {
-					echo '<option value="' . $this->selected_price_list['id'] . '" selected>' . $this->selected_price_list['text'] . '</option>';
+					echo '<option value="' . $this->selected_price_list['id'] . '" selected>' . $this->selected_price_list['name'] . '</option>';
 				}
 				?>
 			</select>
@@ -435,7 +417,7 @@ class Invoice implements Setting_Interface {
 					data-ajax-action="search_bsale_taxes" style="width: 50%">
 				<?php
 				if ( $this->selected_tax ) {
-					echo '<option value="' . $this->selected_tax['id'] . '" selected>' . $this->selected_tax['text'] . '</option>';
+					echo '<option value="' . $this->selected_tax['id'] . '" selected>' . $this->selected_tax['name'] . '</option>';
 				}
 				?>
 			</select>
