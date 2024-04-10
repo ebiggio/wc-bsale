@@ -50,20 +50,7 @@ class Cron implements Setting_Interface {
 	private array $excluded_products = array();
 
 	public function __construct() {
-		// Load the settings from the database
-		$this->settings = maybe_unserialize( get_option( 'wc_bsale_cron' ) );
-
-		// If no settings from the database are found, set the default values
-		if ( ! $this->settings ) {
-			$this->settings = array(
-				'catalog'           => 'all',
-				'products'          => array(),
-				'excluded_products' => array(),
-				'fields'            => array(),
-				'mode'              => 'external',
-				'secret_key'        => '',
-			);
-		}
+		$this->settings = self::get_settings();
 
 		$secret_key = $this->settings['secret_key'];
 
@@ -78,11 +65,29 @@ class Cron implements Setting_Interface {
 	}
 
 	/**
-	 * Validates the data of the cron settings form.
-	 *
-	 * If a value is not valid, it will silently be set to a default value.
-	 *
-	 * @return array
+	 * @inheritDoc
+	 */
+	public static function get_settings(): array {
+		$settings = maybe_unserialize( get_option( 'wc_bsale_cron' ) );
+
+		// If no settings from the database are found, set the default values
+		if ( ! $settings ) {
+			$settings = array(
+				'catalog'           => 'all',
+				'products'          => array(),
+				'excluded_products' => array(),
+				'fields'            => array( 'status' ),
+				'mode'              => 'external',
+				'time'              => '0000',
+				'secret_key'        => '',
+			);
+		}
+
+		return $settings;
+	}
+
+	/**
+	 * @inheritDoc
 	 */
 	public function validate_settings(): array {
 		if ( ! current_user_can( 'manage_options' ) ) {

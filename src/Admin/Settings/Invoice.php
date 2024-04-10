@@ -10,15 +10,12 @@ namespace WC_Bsale\Admin\Settings;
 
 defined( 'ABSPATH' ) || exit;
 
-use WC_Bsale\Bsale\API_Client;
 use WC_Bsale\Interfaces\Setting as Setting_Interface;
+use WC_Bsale\Bsale\API_Client;
 use const WC_Bsale\PLUGIN_URL;
 
 /**
  * Invoice settings class
- *
- * Displays the invoice settings page and handles the validation of the data from the form.
- * Provides access to the settings stored in the database, or a set of default settings if the settings are not found.
  */
 class Invoice implements Setting_Interface {
 	private array|bool $settings = false;
@@ -28,11 +25,18 @@ class Invoice implements Setting_Interface {
 	private array|null $selected_tax = null;
 
 	public function __construct() {
-		$this->settings = maybe_unserialize( get_option( 'wc_bsale_invoice' ) );
+		$this->settings = self::get_settings();
+	}
 
-		// Default settings
-		if ( ! $this->settings ) {
-			$this->settings = array(
+	/**
+	 * @inheritDoc
+	 */
+	public static function get_settings(): array {
+		$settings = maybe_unserialize( get_option( 'wc_bsale_invoice' ) );
+
+		// If no settings from the database are found, set the default values
+		if ( ! $settings ) {
+			$settings = array(
 				'enabled'       => 0,
 				'order_status'  => 'wc-completed',
 				'document_type' => 0,
@@ -43,30 +47,8 @@ class Invoice implements Setting_Interface {
 				'send_email'    => 0
 			);
 		}
-	}
 
-	/**
-	 * Returns an instance of the class.
-	 *
-	 * @return self The instance of the class.
-	 */
-	public static function get_instance(): self {
-		static $instance = null;
-
-		if ( null === $instance ) {
-			$instance = new self();
-		}
-
-		return $instance;
-	}
-
-	/**
-	 * Returns the settings stored in the database. If the settings are not found, a set of default settings are returned.
-	 *
-	 * @return array The invoice settings.
-	 */
-	public function get_settings(): array {
-		return $this->settings;
+		return $settings;
 	}
 
 	/**

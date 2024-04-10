@@ -19,14 +19,23 @@ class Main implements Setting_Interface {
 	private array|bool $settings = array();
 
 	public function __construct() {
-		$this->settings = maybe_unserialize( get_option( 'wc_bsale_main' ) );
+		$this->settings = self::get_settings();
+	}
 
-		if ( ! $this->settings ) {
-			$this->settings = array(
+	/**
+	 * @inheritdoc
+	 */
+	public static function get_settings(): array {
+		$settings = maybe_unserialize( get_option( 'wc_bsale_main' ) );
+
+		if ( ! $settings ) {
+			$settings = array(
 				'sandbox_access_token' => '',
 				'product_identifier'   => 'code'
 			);
 		}
+
+		return $settings;
 	}
 
 	/**

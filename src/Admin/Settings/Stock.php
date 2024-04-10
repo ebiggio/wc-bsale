@@ -10,8 +10,8 @@ namespace WC_Bsale\Admin\Settings;
 
 defined( 'ABSPATH' ) || exit;
 
-use WC_Bsale\Bsale\API_Client;
 use WC_Bsale\Interfaces\Setting as Setting_Interface;
+use WC_Bsale\Bsale\API_Client;
 use const WC_Bsale\PLUGIN_URL;
 
 /**
@@ -27,11 +27,18 @@ class Stock implements Setting_Interface {
 	private array|null $selected_office = null;
 
 	public function __construct() {
-		$this->settings = maybe_unserialize( get_option( 'wc_bsale_stock' ) );
+		$this->settings = self::get_settings();
+	}
 
-		// Default settings
-		if ( ! $this->settings ) {
-			$this->settings = array(
+	/**
+	 * @inheritdoc
+	 */
+	public static function get_settings(): array {
+		$settings = maybe_unserialize( get_option( 'wc_bsale_stock' ) );
+
+		// If no settings from the database are found, set the default values
+		if ( ! $settings ) {
+			$settings = array(
 				'office_id'   => 0,
 				'admin'       => array(
 					'edit'        => 0,
@@ -48,6 +55,8 @@ class Stock implements Setting_Interface {
 				)
 			);
 		}
+
+		return $settings;
 	}
 
 	/**
