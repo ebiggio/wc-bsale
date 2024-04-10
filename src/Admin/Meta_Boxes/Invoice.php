@@ -8,6 +8,8 @@
 
 namespace WC_Bsale\Admin\Meta_Boxes;
 
+defined( 'ABSPATH' ) || exit;
+
 use const WC_Bsale\PLUGIN_URL;
 use const WC_Bsale\PLUGIN_VERSION;
 

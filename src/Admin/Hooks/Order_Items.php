@@ -8,10 +8,10 @@
 
 namespace WC_Bsale\Admin\Hooks;
 
+defined( 'ABSPATH' ) || exit;
+
 use const WC_Bsale\PLUGIN_URL;
 use const WC_Bsale\PLUGIN_VERSION;
-
-defined( 'ABSPATH' ) || exit;
 
 /**
  * Order_Items class

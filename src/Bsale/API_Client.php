@@ -8,10 +8,10 @@
 
 namespace WC_Bsale\Bsale;
 
+defined( 'ABSPATH' ) || exit;
+
 use Exception;
 use WP_Error;
-
-defined( 'ABSPATH' ) || exit;
 
 /**
  * API_Client class

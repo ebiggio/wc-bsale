@@ -3,12 +3,12 @@
  * Display the operation log page.
  */
 
-namespace WC_BSale\Admin;
+namespace WC_Bsale\Admin;
+
+defined( 'ABSPATH' ) || exit;
 
 use const WC_Bsale\PLUGIN_URL;
 use const WC_Bsale\PLUGIN_VERSION;
-
-defined( 'ABSPATH' ) || exit;
 
 if ( ! class_exists( 'WP_List_Table' ) ) {
 	require_once( ABSPATH . 'wp-admin/includes/class-wp-list-table.php' );

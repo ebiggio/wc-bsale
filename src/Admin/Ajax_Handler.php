@@ -10,9 +10,9 @@
 
 namespace WC_Bsale\Admin;
 
-use WC_Bsale\Bsale\API_Client;
-
 defined( 'ABSPATH' ) || exit;
+
+use WC_Bsale\Bsale\API_Client;
 
 /**
  * Ajax_Handler class
