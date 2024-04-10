@@ -18,6 +18,11 @@ use WC_Bsale\Bsale\API_Client;
  * This class doesn't implement the API_Consumer interface, since the results of the operations are shown directly to the user in the admin through notices.
  */
 class Stock {
+	/**
+	 * The ID of the office to sync the stock with.
+	 *
+	 * @var int
+	 */
 	private int $office_id;
 	/**
 	 * The stock settings for the admin, loaded from the Stock class in the admin settings.

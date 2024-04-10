@@ -18,7 +18,12 @@ use const WC_Bsale\PLUGIN_URL;
  * Stock settings class
  */
 class Stock implements Setting_Interface {
-	private array|bool $settings;
+	/**
+	 * The settings for the stock synchronization.
+	 *
+	 * @var array
+	 */
+	private array $settings;
 	/**
 	 * The selected office stored in the settings, with its ID and name. Used to set the selected option in the select element. Null if no office is selected.
 	 *
@@ -60,9 +65,7 @@ class Stock implements Setting_Interface {
 	}
 
 	/**
-	 * Validates the settings of the stock settings page.
-	 *
-	 * @return array
+	 * @inheritdoc
 	 */
 	public function validate_settings(): array {
 		if ( ! current_user_can( 'manage_options' ) ) {
@@ -105,9 +108,7 @@ class Stock implements Setting_Interface {
 	}
 
 	/**
-	 * Returns the title of the settings page.
-	 *
-	 * @return string
+	 * @inheritdoc
 	 */
 	public function get_setting_title(): string {
 		return __( 'Stock synchronization', 'wc-bsale' );
@@ -158,9 +159,7 @@ class Stock implements Setting_Interface {
 	}
 
 	/**
-	 * Displays the stock settings page.
-	 *
-	 * @return void
+	 * @inheritdoc
 	 */
 	public function display_settings(): void {
 		$this->load_page_resources();

@@ -15,6 +15,9 @@ use const WC_Bsale\PLUGIN_VERSION;
 
 /**
  * Settings_Manager class
+ *
+ * This class is responsible for initializing and registering all the settings of the plugin.
+ * It also displays the settings page according to the selected tab, by loading the corresponding settings class.
  */
 class Settings_Manager {
 	private array $settings_classes_map = array();

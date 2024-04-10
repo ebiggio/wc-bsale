@@ -16,7 +16,12 @@ use WC_Bsale\Interfaces\Setting as Setting_Interface;
  * Main settings class
  */
 class Main implements Setting_Interface {
-	private array|bool $settings = array();
+	/**
+	 * The main settings.
+	 *
+	 * @var array
+	 */
+	private $settings;
 
 	public function __construct() {
 		$this->settings = self::get_settings();
@@ -39,9 +44,7 @@ class Main implements Setting_Interface {
 	}
 
 	/**
-	 * Validates the settings of the main settings page.
-	 *
-	 * @return array
+	 * @inheritdoc
 	 */
 	public function validate_settings(): array {
 		if ( ! current_user_can( 'manage_options' ) ) {
@@ -70,18 +73,14 @@ class Main implements Setting_Interface {
 	}
 
 	/**
-	 * Returns the title of the settings page.
-	 *
-	 * @return string
+	 * @inheritdoc
 	 */
 	public function get_setting_title(): string {
 		return __('Main settings', 'wc-bsale');
 	}
 
 	/**
-	 * Displays the main settings page.
-	 *
-	 * @return void
+	 * @inheritdoc
 	 */
 	public function display_settings(): void {
 		add_settings_section(
@@ -94,7 +93,7 @@ class Main implements Setting_Interface {
 		add_settings_field(
 			'wc_bsale_sandbox_access_token',
 			'Sandbox access token',
-			array( $this, 'settings_field_callback' ),
+			array( $this, 'sandbox_access_token_callback' ),
 			'wc-bsale-settings',
 			'wc_bsale_main_section'
 		);
@@ -109,7 +108,7 @@ class Main implements Setting_Interface {
 		add_settings_field(
 			'wc_bsale_product_identifier',
 			'Use the product\'s SKU of WooCommerce to match',
-			array( $this, 'product_identifier_field_callback' ),
+			array( $this, 'product_identifier_callback' ),
 			'wc-bsale-settings',
 			'wc_bsale_product_identifier_section'
 		);
@@ -118,11 +117,21 @@ class Main implements Setting_Interface {
 		do_settings_sections( 'wc-bsale-settings' );
 	}
 
+	/**
+	 * Callback for the settings section description.
+	 *
+	 * @return void
+	 */
 	public function settings_section_description(): void {
 		echo '<hr><p>Settings for connecting with the Bsale API.</p>';
 	}
 
-	public function settings_field_callback(): void {
+	/**
+	 * Callback for the sandbox access token field.
+	 *
+	 * @return void
+	 */
+	public function sandbox_access_token_callback(): void {
 		?>
 		<fieldset>
 			<legend class="screen-reader-text"><span>Sandbox access token</span></legend>
@@ -133,11 +142,21 @@ class Main implements Setting_Interface {
 		<?php
 	}
 
+	/**
+	 * Callback for the product identifier section description.
+	 *
+	 * @return void
+	 */
 	public function product_identifier_section_description(): void {
 		echo '<hr><p>Defines which field in Bsale will be used to identify the products to match them with WooCommerce\'s SKUs.</p>';
 	}
 
-	public function product_identifier_field_callback(): void {
+	/**
+	 * Callback for the product identifier field.
+	 *
+	 * @return void
+	 */
+	public function product_identifier_callback(): void {
 		?>
 		<fieldset class="wc-bsale-related-fieldset">
 			<legend class="screen-reader-text"><span>Product identifier in Bsale</span></legend>

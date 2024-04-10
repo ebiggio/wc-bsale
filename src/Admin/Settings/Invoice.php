@@ -18,11 +18,36 @@ use const WC_Bsale\PLUGIN_URL;
  * Invoice settings class
  */
 class Invoice implements Setting_Interface {
-	private array|bool $settings = false;
-	private array|null $selected_document_type = null;
-	private array|null $selected_office = null;
-	private array|null $selected_price_list = null;
-	private array|null $selected_tax = null;
+	/**
+	 * The settings that govern the invoice generation.
+	 *
+	 * @var array
+	 */
+	private array $settings;
+	/**
+	 * The selected document type details, loaded from Bsale.
+	 *
+	 * @var array
+	 */
+	private array $selected_document_type = array();
+	/**
+	 * The selected office details, loaded from Bsale.
+	 *
+	 * @var array
+	 */
+	private array $selected_office = array();
+	/**
+	 * The selected price list details, loaded from Bsale.
+	 *
+	 * @var array
+	 */
+	private array $selected_price_list = array();
+	/**
+	 * The selected tax details, loaded from Bsale.
+	 *
+	 * @var array
+	 */
+	private array $selected_tax = array();
 
 	public function __construct() {
 		$this->settings = self::get_settings();
@@ -52,9 +77,7 @@ class Invoice implements Setting_Interface {
 	}
 
 	/**
-	 * Validates data from the invoice settings form.
-	 *
-	 * @return array The validated settings to be stored in the database.
+	 * @inheritDoc
 	 */
 	public function validate_settings(): array {
 		if ( ! current_user_can( 'manage_options' ) ) {
@@ -80,9 +103,7 @@ class Invoice implements Setting_Interface {
 	}
 
 	/**
-	 * Returns the title of the settings page.
-	 *
-	 * @return string
+	 * @inheritDoc
 	 */
 	public function get_setting_title(): string {
 		return __( 'Invoice settings', 'wc-bsale' );
@@ -110,7 +131,7 @@ class Invoice implements Setting_Interface {
 	}
 
 	/**
-	 * Loads the entities details from Bsale according to the settings, and stores them in the corresponding properties.
+	 * Loads the entities' details from Bsale according to the settings, and stores them in the corresponding properties.
 	 *
 	 * The data of these entities is used to populate the select fields in the settings page if a value was previously selected.
 	 *
@@ -160,9 +181,7 @@ class Invoice implements Setting_Interface {
 	}
 
 	/**
-	 * Displays the invoice settings page.
-	 *
-	 * @return void
+	 * @inheritDoc
 	 */
 	public function display_settings(): void {
 		$this->load_page_resources();

@@ -22,6 +22,11 @@ use WC_Bsale\Interfaces\Observer;
  * For now, it only has the observer for the database logger, but it could have more in the future.
  */
 class Stock implements API_Consumer {
+	/**
+	 * The ID of the office to use when syncing the stock.
+	 *
+	 * @var int
+	 */
 	private int $office_id;
 	/**
 	 * The stock settings for the storefront side, loaded from the Stock class in the admin settings.
@@ -72,26 +77,14 @@ class Stock implements API_Consumer {
 	}
 
 	/**
-	 * Adds an observer to the list of observers.
-	 *
-	 * @param \WC_Bsale\Interfaces\Observer $observer The observer to add.
-	 *
-	 * @return void
+	 * @inheritDoc
 	 */
 	public function add_observer( Observer $observer ): void {
 		$this->observers[] = $observer;
 	}
 
 	/**
-	 * Notifies all the observers of an event.
-	 *
-	 * @param string $event_trigger
-	 * @param string $event_type
-	 * @param string $identifier
-	 * @param string $message
-	 * @param string $result_code
-	 *
-	 * @return void
+	 * @inheritDoc
 	 */
 	public function notify_observers( string $event_trigger, string $event_type, string $identifier, string $message, string $result_code = 'info' ): void {
 		foreach ( $this->observers as $observer ) {

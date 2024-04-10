@@ -17,9 +17,9 @@ use const WC_Bsale\PLUGIN_VERSION;
  * Invoice class
  *
  * Manages the invoice meta box in the shop_order post type.
- * This meta box displays the following information if the invoice has been successfully generated:
+ * This meta box displays the following information of an invoice that was successfully generated in Bsale for the order that is being viewed:
  * - The invoice number.
- * - A link to view the invoice in Bsale (provided by the Bsale, as a PDF).
+ * - A link to view the invoice in Bsale (provided by Bsale, as a PDF).
  * - The total amount of the invoice.
  *
  * If the invoice has not been generated yet and the order status is the one configured in the plugin settings, it will display a button to generate the invoice.
