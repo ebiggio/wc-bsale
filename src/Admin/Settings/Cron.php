@@ -97,6 +97,7 @@ class Cron implements Setting_Interface {
 		// If no settings from the database are found, set the default values
 		if ( ! $settings ) {
 			$settings = array(
+				'enabled'           => 0,
 				'catalog'           => 'all',
 				'products'          => array(),
 				'excluded_products' => array(),
@@ -121,7 +122,7 @@ class Cron implements Setting_Interface {
 		}
 
 		// Check the settings for the products section
-		$valid_catalog_settings = array( 'all', 'specific', 'none' );
+		$valid_catalog_settings = array( 'all', 'specific' );
 		if ( ! in_array( $_POST['wc_bsale_cron']['catalog'], $valid_catalog_settings, true ) ) {
 			$_POST['wc_bsale_cron']['catalog'] = 'all';
 		}
@@ -183,6 +184,7 @@ class Cron implements Setting_Interface {
 		}
 
 		return array(
+			'enabled'           => isset( $_POST['wc_bsale_cron']['enabled'] ) ? 1 : 0,
 			'catalog'           => sanitize_text_field( $_POST['wc_bsale_cron']['catalog'] ),
 			'products'          => array_map( 'intval', $products ),
 			'excluded_products' => array_map( 'intval', $excluded_products ),
@@ -242,6 +244,21 @@ class Cron implements Setting_Interface {
 		$this->load_page_resources();
 
 		add_settings_section(
+			'wc_bsale_cron_enabled_section',
+			'Cron status',
+			array( $this, 'enabled_description' ),
+			'wc-bsale-settings-cron'
+		);
+
+		add_settings_field(
+			'wc_bsale_cron_enabled',
+			'Enable cron process?',
+			array( $this, 'enabled_callback' ),
+			'wc-bsale-settings-cron',
+			'wc_bsale_cron_enabled_section'
+		);
+
+		add_settings_section(
 			'wc_bsale_cron_products_section',
 			'What to sync with Bsale?',
 			array( $this, 'products_section_description' ),
@@ -299,6 +316,34 @@ class Cron implements Setting_Interface {
 	}
 
 	/**
+	 * Callback for the enabled section description.
+	 *
+	 * @return void
+	 */
+	public function enabled_description(): void {
+		?>
+		<hr><p><?php esc_html_e( 'Enable or disable the cron process. This only affects the cron sync with Bsale; other settings (such as the stock synchronization) are not affected.', 'wc-bsale' ); ?></p>
+		<?php
+	}
+
+	/**
+	 * Callback for the enabled field.
+	 *
+	 * @return void
+	 */
+	public function enabled_callback(): void {
+		?>
+		<fieldset>
+			<legend class="screen-reader-text"><span><?php esc_html_e( 'Enable cron process?', 'wc-bsale' ); ?></span></legend>
+			<label>
+				<input type="checkbox" name="wc_bsale_cron[enabled]" value="1" <?php checked( 1, $this->settings['enabled'] ); ?>>
+				<?php esc_html_e( 'Enable cron process', 'wc-bsale' ); ?>
+			</label>
+		</fieldset>
+		<?php
+	}
+
+	/**
 	 * Callback for the products section description.
 	 *
 	 * @return void
@@ -320,7 +365,7 @@ class Cron implements Setting_Interface {
 				<input type="radio" name="wc_bsale_cron[catalog]" value="all" <?php checked( 'all', $this->settings['catalog'] ); ?>>
 				All the products
 			</label>
-			<p class="description">Sync all the products and their variations, both active and inactive, with Bsale</p>
+			<p class="description">Sync all the products and their variations, both active and inactive, with Bsale.</p>
 			<div class="wc-bsale-notice wc-bsale-notice-warning">
 				<p><span class="dashicons dashicons-warning"></span> The sync with Bsale is a complex process that can affect the performance of the site. If you have a large catalog of products, we recommend that you use the "Specific products"
 					option and select only the products that you want to sync with Bsale.</p>
@@ -341,12 +386,6 @@ class Cron implements Setting_Interface {
 					?>
 				</select>
 			</label>
-			<br>
-			<label>
-				<input type="radio" name="wc_bsale_cron[catalog]" value="none" <?php checked( 'none', $this->settings['catalog'] ); ?>>
-				No sync
-			</label>
-			<p class="description">Disables all cron syncs with Bsale. Other settings (such as the stock synchronization) are not affected.</p>
 		</fieldset>
 		<?php
 	}
