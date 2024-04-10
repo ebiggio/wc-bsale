@@ -11,7 +11,6 @@ namespace WC_Bsale\Admin\Settings;
 defined( 'ABSPATH' ) || exit;
 
 use WC_Bsale\Interfaces\Setting as Setting_Interface;
-
 use const WC_Bsale\PLUGIN_URL;
 
 /**
