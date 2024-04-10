@@ -28,7 +28,7 @@ class Invoice {
 	/**
 	 * The invoice settings, loaded from the Invoice class in the admin settings.
 	 *
-	 * @see \WC_Bsale\Admin\Settings\Invoice Invoice settings class
+	 * @see \WC_Bsale\Admin\Settings\Invoice Invoice settings class.
 	 * @var array
 	 */
 	private array $settings;
@@ -38,7 +38,7 @@ class Invoice {
 
 		add_action( 'add_meta_boxes', array( $this, 'add_meta_box' ) );
 
-		$this->settings = \WC_Bsale\Admin\Settings\Invoice::get_instance()->get_settings();
+		$this->settings = \WC_Bsale\Admin\Settings\Invoice::get_settings();
 
 		// Check for the success transient to show a success message if an invoice was generated successfully
 		if ( get_transient( 'wc_bsale_invoice_success' ) ) {

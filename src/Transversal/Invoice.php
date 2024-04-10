@@ -36,8 +36,7 @@ class Invoice implements API_Consumer {
 	/**
 	 * The invoice settings, loaded from the Invoice class in the admin settings.
 	 *
-	 * @see \WC_Bsale\Admin\Settings\Invoice Invoice settings class
-	 *
+	 * @see \WC_Bsale\Admin\Settings\Invoice Invoice settings class.
 	 * @var array
 	 */
 	private array $settings;
@@ -47,7 +46,7 @@ class Invoice implements API_Consumer {
 		$this->add_observer( DB_Logger::get_instance() );
 
 		// Get the invoice settings
-		$this->settings = \WC_Bsale\Admin\Settings\Invoice::get_instance()->get_settings();
+		$this->settings = \WC_Bsale\Admin\Settings\Invoice::get_settings();
 
 		$this->register_invoice_hooks();
 

@@ -23,11 +23,22 @@ use WC_Bsale\Interfaces\Observer;
  */
 class Stock implements API_Consumer {
 	private int $office_id;
-	private mixed $storefront_stock_settings;
+	/**
+	 * The stock settings for the storefront side, loaded from the Stock class in the admin settings.
+	 *
+	 * @see \WC_Bsale\Admin\Settings\Stock Stock settings class.
+	 * @var array
+	 */
+	private array $storefront_stock_settings;
+	/**
+	 * The observers that will be notified when an event is triggered.
+	 *
+	 * @var array
+	 */
 	private array $observers = array();
 
 	public function __construct() {
-		$stock_settings = maybe_unserialize( get_option( 'wc_bsale_stock' ) );
+		$stock_settings = \WC_Bsale\Admin\Settings\Stock::get_settings();
 
 		// If there are no stock settings, we don't need to add the hooks
 		if ( ! $stock_settings ) {

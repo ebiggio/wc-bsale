@@ -19,10 +19,16 @@ use WC_Bsale\Bsale\API_Client;
  */
 class Stock {
 	private int $office_id;
-	private array|false $admin_stock_settings;
+	/**
+	 * The stock settings for the admin, loaded from the Stock class in the admin settings.
+	 *
+	 * @see \WC_Bsale\Admin\Settings\Stock Stock settings class.
+	 * @var array
+	 */
+	private array $admin_stock_settings;
 
 	public function __construct() {
-		$stock_settings = maybe_unserialize( get_option( 'wc_bsale_stock' ) );
+		$stock_settings = \WC_Bsale\Admin\Settings\Stock::get_settings();
 
 		// If there are no stock settings, we don't need to add the hooks
 		if ( ! $stock_settings ) {

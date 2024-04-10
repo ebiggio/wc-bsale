@@ -26,17 +26,23 @@ class Stock implements API_Consumer {
 	 */
 	private array $observers = array();
 	/**
-	 * The stock settings from the plugin options.
+	 * The stock settings, loaded from the Stock class in the admin settings.
 	 *
+	 * @see \WC_Bsale\Admin\Settings\Stock Stock settings class.
 	 * @var array
 	 */
-	private array $stock_settings;
+	private array $settings;
 
-	public function __construct( array $stock_settings ) {
+	public function __construct() {
 		// Add the database logger as an observer
 		$this->add_observer( DB_Logger::get_instance() );
 
-		$this->stock_settings = $stock_settings;
+		$this->settings = \WC_Bsale\Admin\Settings\Stock::get_settings();
+
+		// The stock hooks dependes of an office being set to use it when consuming the stock
+		if ( ! $this->settings['office_id'] ) {
+			return;
+		}
 
 		$this->register_stock_hooks();
 	}
@@ -63,19 +69,14 @@ class Stock implements API_Consumer {
 	 * @return void
 	 */
 	private function register_stock_hooks(): void {
-		// The stock hooks dependes of an office being set to use it when consuming the stock
-		if ( ! $this->stock_settings['office_id'] ) {
-			return;
-		}
-
-		if ( 'wc' === $this->stock_settings['order_event'] ) {
+		if ( 'wc' === $this->settings['transversal']['order_event'] ) {
 			// wc = WooCommerce. Meaning that the stock must be consumed when WooCommerce reduces the stock
 
 			// This sends the order object to the callback function
 			add_action( 'woocommerce_reduce_order_stock', array( $this, 'check_order_for_stock_consumption' ) );
 		} else {
 			// The $order_event is set to "custom", so we hook to each defined order status to consume the stock when an order reaches that status
-			$order_status = $this->stock_settings['order_status'];
+			$order_status = $this->settings['transversal']['order_status'];
 
 			foreach ( $order_status as $status ) {
 				if ( wc_is_order_status( $status ) ) {
@@ -172,9 +173,9 @@ class Stock implements API_Consumer {
 	 * @return bool True if the stock was consumed successfully for all the provided products. False if an empty office ID was provided, or if there was an error consuming the stock.
 	 */
 	private function consume_bsale_stock( int $order_number, array $products_to_consume_stock ): bool {
-		$office_id = $this->stock_settings['office_id'];
+		$office_id = $this->settings['office_id'];
 
-		$note           = strip_tags( $this->stock_settings['note'] );
+		$note           = strip_tags( $this->settings['transversal']['note'] );
 		$formatted_note = str_replace( array( '{1}', '{2}', "\r", "\n" ), array( get_bloginfo( 'name' ), $order_number, '', '' ), $note );
 
 		$bsale_api_client     = new API_Client();

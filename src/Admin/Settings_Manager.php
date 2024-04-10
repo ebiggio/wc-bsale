@@ -73,7 +73,7 @@ class Settings_Manager {
 		$current_tab = $_GET['tab'] ?? 'main'; // Fallback to 'main' if 'tab' is not set
 
 		// Check if the API access token is set and redirect to the main settings if trying to access another tab
-		if ( ! $this->settings_classes_map['main']->get_access_token() && 'main' !== $current_tab ) {
+		if ( ! $this->settings_classes_map['main']::get_settings()['sandbox_access_token'] && 'main' !== $current_tab ) {
 			// Show a warning message if the API access token is not set
 			add_settings_error( 'wc_bsale_messages', 'wc_bsale_message', 'The Bsale API access token is required.' );
 
