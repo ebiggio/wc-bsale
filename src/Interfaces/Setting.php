@@ -2,7 +2,6 @@
 /**
  * Interface for the settings classes.
  *
- * @class   Setting
  * @package WC_Bsale
  */
 

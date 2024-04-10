@@ -2,7 +2,6 @@
 /**
  * Interface for the observer pattern.
  *
- * @class   Observer
  * @package WC_Bsale
  */
 
@@ -10,6 +9,9 @@ namespace WC_Bsale\Interfaces;
 
 /**
  * Observer interface
+ *
+ * This interface defines the methods that an observer class must implement to use the observer pattern.
+ * An observer is a class that will be notified when an event is triggered and will log the operation, send notifications, etc.
  */
 interface Observer {
 	/**

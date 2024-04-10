@@ -2,10 +2,6 @@
 /**
  * Interface for the classes that will consume the Bsale API without direct supervision from a user.
  *
- * This interface defines the methods that the classes that consume the Bsale API must implement to use the observer pattern.
- * Those observers will then be able to log the operations, send notifications, etc.
- *
- * @class   API_Consumer
  * @package WC_Bsale
  */
 
@@ -13,6 +9,11 @@ namespace WC_Bsale\Interfaces;
 
 /**
  * API_Consumer interface
+ *
+ * This interface defines the methods that a class that consumes the Bsale API must implement to use the observer pattern.
+ * Those observers will then be able to log the operations, send notifications, etc.
+ *
+ * @property array $observers The observers that will be notified when an event is triggered.
  */
 interface API_Consumer {
 	/**
