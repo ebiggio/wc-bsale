@@ -17,7 +17,17 @@ use const WC_Bsale\PLUGIN_URL;
  * Cron settings class
  */
 class Cron implements Setting_Interface {
-	private array|bool $settings;
+	/**
+	 * The settings for the cron functionality.
+	 *
+	 * @var array
+	 */
+	private array $settings;
+	/**
+	 * Valid times that can be selected for the cron sync.
+	 *
+	 * @var array
+	 */
 	private array $valid_cron_times = array(
 		'0000' => '00:00',
 		'0100' => '01:00',
@@ -44,8 +54,23 @@ class Cron implements Setting_Interface {
 		'2200' => '22:00',
 		'2300' => '23:00'
 	);
+	/**
+	 * The URL for the custom cron endpoint.
+	 *
+	 * @var string
+	 */
 	private string $cron_endpoint_url;
+	/**
+	 * The products that are selected for the cron sync, as WooCommerce product objects (\WC_Product)
+	 *
+	 * @var array
+	 */
 	private array $products = array();
+	/**
+	 * The products that are excluded from the cron sync, as WooCommerce product objects (\WC_Product)
+	 *
+	 * @var array
+	 */
 	private array $excluded_products = array();
 
 	public function __construct() {
@@ -162,9 +187,7 @@ class Cron implements Setting_Interface {
 	}
 
 	/**
-	 * Returns the title of the settings page.
-	 *
-	 * @return string
+	 * @inheritDoc
 	 */
 	public function get_setting_title(): string {
 		return __('Cron settings', 'wc-bsale');
@@ -173,7 +196,8 @@ class Cron implements Setting_Interface {
 	/**
 	 * Loads WooCommerce products and excluded products from the settings.
 	 *
-	 * If the settings have products selected, we load them and store them in the $products property, using their IDs. The same goes for the excluded products, which are stored in the $excluded_products property.
+	 * If the settings have products selected, we load them by their IDs and store them in the $products property.
+	 * The same goes for the excluded products, which are stored in the $excluded_products property.
 	 *
 	 * @return void
 	 */
@@ -204,9 +228,7 @@ class Cron implements Setting_Interface {
 	}
 
 	/**
-	 * Displays the cron settings page.
-	 *
-	 * @return void
+	 * @inheritDoc
 	 */
 	public function display_settings(): void {
 		$this->load_wc_products();
@@ -215,14 +237,14 @@ class Cron implements Setting_Interface {
 		add_settings_section(
 			'wc_bsale_cron_products_section',
 			'What to sync with Bsale?',
-			array( $this, 'cron_products_section_description' ),
+			array( $this, 'products_section_description' ),
 			'wc-bsale-settings-cron'
 		);
 
 		add_settings_field(
 			'wc_bsale_cron_products',
 			'Sync the following products with Bsale',
-			array( $this, 'cron_products_callback' ),
+			array( $this, 'products_callback' ),
 			'wc-bsale-settings-cron',
 			'wc_bsale_cron_products_section'
 		);
@@ -230,7 +252,7 @@ class Cron implements Setting_Interface {
 		add_settings_field(
 			'wc_bsale_cron_excluded_products',
 			'Don\'t sync these products',
-			array( $this, 'cron_excluded_products_callback' ),
+			array( $this, 'excluded_products_callback' ),
 			'wc-bsale-settings-cron',
 			'wc_bsale_cron_products_section'
 		);
@@ -238,14 +260,14 @@ class Cron implements Setting_Interface {
 		add_settings_section(
 			'wc_bsale_cron_fields_section',
 			'Which fields to sync with Bsale?',
-			array( $this, 'cron_fields_section_description' ),
+			array( $this, 'fields_section_description' ),
 			'wc-bsale-settings-cron'
 		);
 
 		add_settings_field(
 			'wc_bsale_cron_field_options',
 			'Sync these fields with Bsale',
-			array( $this, 'cron_field_options_callback' ),
+			array( $this, 'field_options_callback' ),
 			'wc-bsale-settings-cron',
 			'wc_bsale_cron_fields_section'
 		);
@@ -253,14 +275,14 @@ class Cron implements Setting_Interface {
 		add_settings_section(
 			'wc_bsale_cron_mode_section',
 			'How to sync with Bsale?',
-			array( $this, 'cron_mode_section_description' ),
+			array( $this, 'mode_section_description' ),
 			'wc-bsale-settings-cron'
 		);
 
 		add_settings_field(
 			'wc_bsale_cron_sync_mode',
 			'Sync mode',
-			array( $this, 'cron_mode_callback' ),
+			array( $this, 'mode_callback' ),
 			'wc-bsale-settings-cron',
 			'wc_bsale_cron_mode_section'
 		);
@@ -269,11 +291,21 @@ class Cron implements Setting_Interface {
 		do_settings_sections( 'wc-bsale-settings-cron' );
 	}
 
-	public function cron_products_section_description(): void {
+	/**
+	 * Callback for the products section description.
+	 *
+	 * @return void
+	 */
+	public function products_section_description(): void {
 		echo '<hr><p>Settings that define what elements of the product catalog will be synced with the data in Bsale.</p>';
 	}
 
-	public function cron_products_callback(): void {
+	/**
+	 * Callback for the products to sync field.
+	 *
+	 * @return void
+	 */
+	public function products_callback(): void {
 		?>
 		<fieldset class="wc-bsale-related-fieldset">
 			<legend class="screen-reader-text"><span>Sync the following products with Bsale</span></legend>
@@ -312,7 +344,12 @@ class Cron implements Setting_Interface {
 		<?php
 	}
 
-	public function cron_excluded_products_callback(): void {
+	/**
+	 * Callback for the excluded products field.
+	 *
+	 * @return void
+	 */
+	public function excluded_products_callback(): void {
 		?>
 		<fieldset>
 			<legend class="screen-reader-text"><span>Don't sync these products</span></legend>
@@ -332,11 +369,21 @@ class Cron implements Setting_Interface {
 		<?php
 	}
 
-	public function cron_fields_section_description(): void {
+	/**
+	 * Callback for the fields section description.
+	 *
+	 * @return void
+	 */
+	public function fields_section_description(): void {
 		echo '<hr><p>Settings for specifying which fields of the products will be synced with Bsale.</p>';
 	}
 
-	public function cron_field_options_callback(): void {
+	/**
+	 * Callback for the field options.
+	 *
+	 * @return void
+	 */
+	public function field_options_callback(): void {
 		?>
 		<fieldset>
 			<legend class="screen-reader-text"><span>Sync these fields with Bsale</span></legend>
@@ -358,11 +405,21 @@ class Cron implements Setting_Interface {
 		<?php
 	}
 
-	public function cron_mode_section_description(): void {
+	/**
+	 * Callback for the mode section description.
+	 *
+	 * @return void
+	 */
+	public function mode_section_description(): void {
 		echo '<hr><p>Settings for specifying how the sync with Bsale will be performed.</p>';
 	}
 
-	public function cron_mode_callback(): void {
+	/**
+	 * Callback for the mode field.
+	 *
+	 * @return void
+	 */
+	public function mode_callback(): void {
 		?>
 		<fieldset class="wc-bsale-related-fieldset">
 			<legend class="screen-reader-text"><span>Sync mode</span></legend>
