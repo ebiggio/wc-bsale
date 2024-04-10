@@ -115,7 +115,7 @@ class Cron implements Setting_Interface {
 	 */
 	public function validate_settings(): array {
 		if ( ! current_user_can( 'manage_options' ) ) {
-			add_settings_error( 'wc_bsale_messages', 'wc_bsale_message', __('You do not have sufficient permissions to access this page.', 'wc-bsale') );
+			add_settings_error( 'wc_bsale_messages', 'wc_bsale_message', __( 'You do not have sufficient permissions to access this page.', 'wc-bsale' ) );
 
 			return array();
 		}
@@ -129,8 +129,15 @@ class Cron implements Setting_Interface {
 		$products          = $_POST['wc_bsale_cron']['products'] ?? array();
 		$excluded_products = $_POST['wc_bsale_cron']['excluded_products'] ?? array();
 
+		// There should be at least one field selected. Otherwise, the cron sync won't do anything
+		if ( empty( $_POST['wc_bsale_cron']['fields'] ) ) {
+			add_settings_error( 'wc_bsale_messages', 'wc_bsale_message', __( 'You must select at least one field to sync with Bsale.', 'wc-bsale' ) );
+
+			$_POST['wc_bsale_cron']['fields'] = array( 'status' );
+		}
+
 		// Validate the field checkboxes
-		$valid_fields                     = array( 'description', 'stock', 'status' );
+		$valid_fields                     = array( 'status', 'description', 'stock' );
 		$_POST['wc_bsale_cron']['fields'] = array_intersect( $_POST['wc_bsale_cron']['fields'], $valid_fields );
 
 		// Check the sync mode
@@ -190,7 +197,7 @@ class Cron implements Setting_Interface {
 	 * @inheritDoc
 	 */
 	public function get_setting_title(): string {
-		return __('Cron settings', 'wc-bsale');
+		return __( 'Cron settings', 'wc-bsale' );
 	}
 
 	/**
@@ -388,6 +395,11 @@ class Cron implements Setting_Interface {
 		<fieldset>
 			<legend class="screen-reader-text"><span>Sync these fields with Bsale</span></legend>
 			<label>
+				<input type="checkbox" name="wc_bsale_cron[fields][status]" value="status" <?php checked( in_array( 'status', $this->settings['fields'], true ) ); ?>>
+				Status
+			</label>
+			<br>
+			<label>
 				<input type="checkbox" name="wc_bsale_cron[fields][description]" value="description" <?php checked( in_array( 'description', $this->settings['fields'], true ) ); ?>>
 				Description
 			</label>
@@ -395,11 +407,6 @@ class Cron implements Setting_Interface {
 			<label>
 				<input type="checkbox" name="wc_bsale_cron[fields][stock]" value="stock" <?php checked( in_array( 'stock', $this->settings['fields'], true ) ); ?>>
 				Stock
-			</label>
-			<br>
-			<label>
-				<input type="checkbox" name="wc_bsale_cron[fields][status]" value="status" <?php checked( in_array( 'status', $this->settings['fields'], true ) ); ?>>
-				Status
 			</label>
 		</fieldset>
 		<?php
