@@ -19,7 +19,7 @@ class Header {
 	public function __construct( $settings_classes_map, $current_tab) {
 		?>
 		<div class="wrap">
-			<h1><img src="<?php echo PLUGIN_URL . 'assets/images/bsale_icon.png' ?>" alt=""> WooCommerce Bsale plugin settings</h1>
+			<h1><img src="<?php echo PLUGIN_URL . 'assets/images/bsale_icon.png' ?>" alt=""> <?php esc_html_e( 'WooCommerce Bsale Integration - Plugin settings', 'wc-bsale' ); ?></h1>
 
 			<?php settings_errors( 'wc_bsale_messages' ); ?>
 

@@ -27,7 +27,7 @@ class Footer {
 				printf(
 				/* translators: %s: plugin name */
 					esc_html__( 'Thank you for using the %s.', 'wc-bsale' ),
-					'<strong>WooCommerce Bsale plugin</strong>'
+					'<strong>WooCommerce Bsale Integration plugin</strong>'
 				);
 				?>
 			</p>
