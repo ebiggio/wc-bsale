@@ -74,7 +74,7 @@ class Stock implements API_Consumer {
 
 			// This sends the order object to the callback function
 			add_action( 'woocommerce_reduce_order_stock', array( $this, 'check_order_for_stock_consumption' ) );
-		} else {
+		} elseif ( 'custom' === $this->settings['transversal']['order_event'] ) {
 			// The $order_event is set to "custom", so we hook to each defined order status to consume the stock when an order reaches that status
 			$order_status = $this->settings['transversal']['order_status'];
 

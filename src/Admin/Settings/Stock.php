@@ -87,7 +87,7 @@ class Stock implements Setting_Interface {
 		);
 
 		// Order processing options
-		if ( ! in_array( $_POST['wc_bsale_transversal']['order_event'], array( 'wc', 'custom' ), true ) ) {
+		if ( ! in_array( $_POST['wc_bsale_transversal']['order_event'], array( 'wc', 'custom', 'never' ), true ) ) {
 			$_POST['wc_bsale_transversal']['order_event'] = 'wc';
 		}
 
@@ -358,10 +358,16 @@ class Stock implements Setting_Interface {
 				?>
 			</select>
 			<p class="description">When the order status changes to one of the selected statuses, the stock of the products in the order will be deducted on Bsale.</p>
+			<br>
+			<label>
+				<input type="radio" name="wc_bsale_transversal[order_event]" value="never" <?php checked( 'never', $this->settings['transversal']['order_event'] ?? 'wc' ); ?> />
+				Never
+			</label>
+			<p class="description">The stock of the products in an order won't be deducted on Bsale under any circumstances.</p>
 		</fieldset>
 		<div class="wc-bsale-notice wc-bsale-notice-success">
 			<p>
-				<span class="dashicons dashicons-yes"></span> In any of the cases, the stock of the products in the order will be deducted on Bsale only once, even if multiple events that reduce the stock are triggered in WooCommerce (e.g. when the
+				<span class="dashicons dashicons-yes"></span> For either of the first two options, the stock of the products in the order will be deducted on Bsale only once, even if multiple events that reduce the stock are triggered in WooCommerce (e.g. when the
 				order status changes to "Processing" and then to "Completed").
 				The plugin will keep track of the items in the order that has already been deducted on Bsale, preventing the stock from being deducted multiple times.
 			</p>
