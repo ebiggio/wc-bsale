@@ -15,7 +15,7 @@ namespace WC_Bsale;
 // Prevent direct access to this file
 defined( 'ABSPATH' ) || exit;
 
-const PLUGIN_VERSION = '0.5.0';
+const PLUGIN_VERSION = '0.6.0';
 const PLUGIN_DIR     = __DIR__;
 define( "WC_Bsale\PLUGIN_URL", plugin_dir_url( __FILE__ ) );
 
@@ -44,7 +44,7 @@ register_activation_hook( __FILE__, function () {
 require_once plugin_dir_path( __FILE__ ) . '/src/Autoload.php';
 
 // Expose the hook for the cron job
-add_action( 'wc_bsale_cron', array( new Cron(), 'run' ) );
+add_action( 'wc_bsale_cron', array( new Cron(), 'run_sync' ) );
 
 // And away we go
 // --------------
