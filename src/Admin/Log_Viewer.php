@@ -188,14 +188,19 @@ class Log_Viewer extends \WP_List_Table {
 	 * @param string $event_trigger The event trigger that caused the log entry (name of the method that triggered the event).
 	 * @param string $identifier    The identifier related to the event: a product SKU or an order ID.
 	 *
-	 * @return string The URL to the product or order edit page. If the identifier is not found, an empty string is returned.
+	 * @return string The URL to the product or order edit page. If no URL is generated, returns the original identifier or a message indicating that the product or order was not found.
 	 */
 	private function generate_admin_url( string $event_trigger, string $identifier ): string {
-		$identifier_url = '';
+		$identifier_url = $identifier;
+
+		if ( ! $identifier ) {
+			return $identifier_url;
+		}
 
 		switch ( $event_trigger ) {
 			case 'add_to_cart':
 			case 'check_cart_items_checkout':
+			case 'cron':
 				// The identifier is a product or variation SKU
 				$product_id = wc_get_product_id_by_sku( $identifier );
 
