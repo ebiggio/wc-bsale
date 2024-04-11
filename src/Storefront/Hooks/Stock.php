@@ -222,12 +222,14 @@ class Stock implements API_Consumer {
 			return;
 		}
 
+		$current_stock = $product->get_stock_quantity();
+
 		// If the current stock differs from the stock in Bsale, we sync it
-		if ( $product->get_stock_quantity() !== $bsale_stock ) {
+		if ( $current_stock !== $bsale_stock ) {
 			$product->set_stock_quantity( $bsale_stock );
 			$product->save();
 
-			$this->notify_observers( $event_trigger, 'stock_update', $product->get_sku(), 'Stock updated to ' . $bsale_stock, 'success' );
+			$this->notify_observers( $event_trigger, 'stock_update', $product->get_sku(), 'Stock updated from ' . $current_stock . ' to ' . $bsale_stock, 'success' );
 		}
 	}
 }
