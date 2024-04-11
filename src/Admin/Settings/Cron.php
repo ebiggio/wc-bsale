@@ -85,7 +85,7 @@ class Cron implements Setting_Interface {
 
 		// Generate the custom cron URL
 		$base_url                = home_url( '/' );
-		$this->cron_endpoint_url = add_query_arg( 'wc_bsale_cron', $this->settings['secret_key'], $base_url );
+		$this->cron_endpoint_url = add_query_arg( array( 'wc_bsale' => 'run_cron', 'secret_key' => $this->settings['secret_key'] ), $base_url );
 	}
 
 	/**
