@@ -104,6 +104,7 @@ class Log_Viewer extends \WP_List_Table {
 	 */
 	public function get_columns(): array {
 		return array(
+			'id'                 => __( 'ID', 'wc-bsale' ),
 			'operation_datetime' => __( 'Date', 'wc-bsale' ),
 			'event_trigger'      => __( 'Event', 'wc-bsale' ),
 			'identifier'         => __( 'Identifier', 'wc-bsale' ),
@@ -118,6 +119,7 @@ class Log_Viewer extends \WP_List_Table {
 	 */
 	protected function get_sortable_columns(): array {
 		return array(
+			'id'                 => array( 'id', false ),
 			'operation_datetime' => array( 'operation_datetime', false ),
 			'event_trigger'      => array( 'event_trigger', false ),
 			'identifier'         => array( 'identifier', false )
@@ -130,7 +132,7 @@ class Log_Viewer extends \WP_List_Table {
 	 * @return void
 	 */
 	public function prepare_items(): void {
-		$orderby   = ! empty( $_REQUEST['orderby'] ) ? $_REQUEST['orderby'] : 'operation_datetime';
+		$orderby   = ! empty( $_REQUEST['orderby'] ) ? $_REQUEST['orderby'] : 'id';
 		$order     = ! empty( $_REQUEST['order'] ) ? $_REQUEST['order'] : 'DESC';
 		$search    = ! empty( $_REQUEST['s'] ) ? $_REQUEST['s'] : '';
 		$clear_log = ! empty( $_POST['clear_log'] ) ? $_POST['clear_log'] : '';
@@ -169,6 +171,7 @@ class Log_Viewer extends \WP_List_Table {
 			case 'operation_datetime':
 				// Return date according to the WordPress settings
 				return date_i18n( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( $item[ $column_name ] ) );
+			case 'id':
 			case 'message':
 			case 'event_trigger':
 				return $item[ $column_name ];
@@ -266,10 +269,16 @@ class Log_Viewer extends \WP_List_Table {
 		<div class="wrap">
 			<h1><?php _e( 'Operations log', 'wc-bsale' ); ?></h1>
 			<div>
-				<p><?php _e( 'This page shows the unsupervised operations that have been performed by the plugin, such as stock updates triggered by storefront events and stock consumption triggered by order status changes. The actions that display a message to the user (such as stock updates triggered by the admin) are not logged here.', 'wc-bsale' ); ?></p>
+				<p>
+					<?php _e( 'This page shows the unsupervised operations that have been performed by the plugin, such as stock updates triggered by storefront events and stock consumption triggered by order status changes.
+					The actions that display a message to the user (such as stock updates triggered by the admin) are not logged here.', 'wc-bsale' ); ?>
+				</p>
 				<div class="wc-bsale-notice wc-bsale-notice-info">
-					<p><span class="dashicons dashicons-visibility"></span> The "Identifier" column contains links to the product or order that triggered the event. Click on the link to go to the product or order edit page. In the case of products or
-						variations, the SKU is shown in brackets for easier identification of spaces or special characters.</p>
+					<p>
+						<span class="dashicons dashicons-visibility"></span>
+						<?php _e( 'The "Identifier" column can contains links to the product or order that was affected by the event. Click on the link to open the product or order edit page in a new tab.
+						In the case of products or variations, the SKU is shown in brackets for easier identification of spaces or special characters.', 'wc-bsale' ); ?>
+					</p>
 				</div>
 			</div>
 			<form method="post">

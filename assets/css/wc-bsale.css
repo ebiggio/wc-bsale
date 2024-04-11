@@ -53,6 +53,10 @@
     background-color: #d4edda;
 }
 
+.wp-list-table .column-id {
+    width: 5%;
+}
+
 .wp-list-table .column-message {
     width: 40%;
 }
