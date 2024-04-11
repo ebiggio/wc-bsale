@@ -28,8 +28,7 @@ class Invoice implements API_Consumer {
 	/**
 	 * The observers that will be notified when an event is triggered.
 	 *
-	 * @see Observer
-	 *
+	 * @see Observer The observer interface.
 	 * @var array
 	 */
 	private array $observers = array();
@@ -162,6 +161,9 @@ class Invoice implements API_Consumer {
 		$invoice_details = array();
 
 		foreach ( $order->get_items() as $item ) {
+			// TODO Check if the product has a SKU
+			// TODO Check if a price was paid for the product
+			// TODO Logic for grouped products
 			if ( $item->get_variation_id() > 0 ) {
 				$product = wc_get_product( $item->get_variation_id() );
 			} else {
