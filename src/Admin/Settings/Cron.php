@@ -376,7 +376,7 @@ class Cron implements Setting_Interface {
 			</label>
 			<p class="description">Only the products that are selected in the following list.</p>
 			<label>
-				<select id="wc_bsale_cron_products" name="wc_bsale_cron[products][]" class="wc-product-search" data-action="woocommerce_json_search_products_and_variations" multiple="multiple" style="width: 300px">
+				<select id="wc_bsale_cron_products" name="wc_bsale_cron[products][]" class="wc-product-search" data-action="woocommerce_json_search_products_and_variations" multiple="multiple" style="width: 500px">
 					<?php
 					if ( $this->products ) {
 						foreach ( $this->products as $product ) {
@@ -400,7 +400,7 @@ class Cron implements Setting_Interface {
 		<fieldset>
 			<legend class="screen-reader-text"><span>Don't sync these products</span></legend>
 			<label>
-				<select id="wc_bsale_cron_excluded_products" name="wc_bsale_cron[excluded_products][]" class="wc-product-search" multiple="multiple" style="width: 300px">
+				<select id="wc_bsale_cron_excluded_products" name="wc_bsale_cron[excluded_products][]" class="wc-product-search" multiple="multiple" style="width: 500px">
 					<?php
 					if ( $this->excluded_products ) {
 						foreach ( $this->excluded_products as $product ) {
@@ -447,6 +447,19 @@ class Cron implements Setting_Interface {
 				<input type="checkbox" name="wc_bsale_cron[fields][stock]" value="stock" <?php checked( in_array( 'stock', $this->settings['fields'], true ) ); ?>>
 				Stock
 			</label>
+			<div class="wc-bsale-notice wc-bsale-notice-warning">
+				<p>
+					<span class="dashicons dashicons-info"></span>
+					To sync the stock of the products with Bsale, you need to set an office in the <a href="<?php echo esc_url( admin_url( 'admin.php?page=wc-bsale-settings&tab=stock' ) ); ?>">Stock synchronization</a> settings.
+					If you don't set an office, the stock sync won't be performed.
+				</p>
+			</div>
+			<div class="wc-bsale-notice wc-bsale-notice-info">
+				<p>
+					<span class="dashicons dashicons-visibility"></span>
+					Remember that for a product's stock to be synced with Bsale, the product (or its variations) must have a SKU and its stock management must be enabled.
+				</p>
+			</div>
 		</fieldset>
 		<?php
 	}
