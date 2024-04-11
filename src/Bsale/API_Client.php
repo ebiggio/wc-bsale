@@ -328,6 +328,34 @@ class API_Client {
 	}
 
 	/**
+	 * Searches for a variant in Bsale by an identifier (code or barcode) and return its data.
+	 *
+	 * Will only return the first variant found (if any) even if there are multiple variants with the same identifier (which shouldn't happen, since the identifier should be unique).
+	 * This method won't filter a variant by its state (active or inactive), so it's possible to get an inactive variant.
+	 *
+	 * @param string $identifier The variant's identifier. Can be a variant's code or barcode.
+	 *
+	 * @return array The variant's data. Will be empty if no variant was found for the identifier provided.
+	 * @throws \Exception If there was an error fetching the variant from Bsale.
+	 *
+	 * @link https://docs.bsale.dev/CL/variantes/#get-lista-de-variantes Bsale API documentation for listing variants endpoint.
+	 */
+	public function get_variant_by_identifier( string $identifier ): array {
+		if ( '' === $identifier ) {
+			return array();
+		}
+
+		$variant = $this->make_request( 'variants.json?' . $this->product_identifier . '=' . $identifier );
+
+		if ( 0 === $variant->count ) {
+			// No variant found for the identifier provided
+			return array();
+		}
+
+		return (array) $variant->items[0];
+	}
+
+	/**
 	 * Searches for **active** offices in Bsale by their names and returns their IDs and names.
 	 *
 	 * @param string $name The name of the office to search for.
