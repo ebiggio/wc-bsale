@@ -262,8 +262,11 @@ class Stock implements Setting_Interface {
 			<div class="wc-bsale-notice wc-bsale-notice-info">
 				<p><span class="dashicons dashicons-visibility"></span> If you don't see the office you are looking for, please make sure that the office is active in Bsale and its name is not empty.</p>
 			</div>
+			<div class="wc-bsale-notice wc-bsale-notice-warning">
+				<p><span class="dashicons dashicons-info"></span> This office is also used in the cron job to get the stock of the products if the cron job is enabled and set to sync stock.</p>
+			</div>
 			<div class="wc-bsale-notice wc-bsale-notice-error">
-				<p><span class="dashicons dashicons-no-alt"></span> If no office is selected, all the stock operations won't be performed in Bsale, essentially disabling the stock synchronization features.</p>
+				<p><span class="dashicons dashicons-no-alt"></span> If no office is selected, no stock operation will be performed, essentially disabling the stock synchronization features of the plugin (both updating and consuming stock).</p>
 			</div>
 		</fieldset>
 		<?php
