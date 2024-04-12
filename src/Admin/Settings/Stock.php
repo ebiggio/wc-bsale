@@ -167,8 +167,7 @@ class Stock implements Setting_Interface {
 
 		?>
 		<div class="wc-bsale-notice wc-bsale-notice-info">
-			<p><span class="dashicons dashicons-visibility"></span> For a product or variation to be synchronized with Bsale, it must have a SKU and the "Manage stock" option enabled. Depending on the settings in the "Main" tab, the SKU of the
-				product will be used to look for the <code>SKU (code)</code> or <code>barcode (barCode)</code> field in Bsale to match the products.</p>
+			<p><span class="dashicons dashicons-visibility"></span> For a product or variation to be synchronized with Bsale, it must have a SKU and the "Manage stock" option enabled.</p>
 		</div>
 		<?php
 		add_settings_section(
@@ -259,14 +258,14 @@ class Stock implements Setting_Interface {
 				?>
 			</select>
 			<p class="description">All the stock operations will be performed using the stock of the products in this office.</p>
-			<div class="wc-bsale-notice wc-bsale-notice-info">
-				<p><span class="dashicons dashicons-visibility"></span> If you don't see the office you are looking for, please make sure that the office is active in Bsale and its name is not empty.</p>
+			<div class="wc-bsale-notice wc-bsale-notice-error">
+				<p><span class="dashicons dashicons-no-alt"></span> If no office is selected, no stock operation will be performed, essentially disabling the stock synchronization features of the plugin (both updating and consuming stock).</p>
 			</div>
 			<div class="wc-bsale-notice wc-bsale-notice-warning">
 				<p><span class="dashicons dashicons-info"></span> This office is also used in the cron job to get the stock of the products if the cron job is enabled and set to sync stock.</p>
 			</div>
-			<div class="wc-bsale-notice wc-bsale-notice-error">
-				<p><span class="dashicons dashicons-no-alt"></span> If no office is selected, no stock operation will be performed, essentially disabling the stock synchronization features of the plugin (both updating and consuming stock).</p>
+			<div class="wc-bsale-notice wc-bsale-notice-info">
+				<p><span class="dashicons dashicons-visibility"></span> If you don't see the office you are looking for, please make sure that the office is active in Bsale and its name is not empty.</p>
 			</div>
 		</fieldset>
 		<?php
@@ -367,14 +366,14 @@ class Stock implements Setting_Interface {
 				Never
 			</label>
 			<p class="description">The stock of the products in an order won't be deducted on Bsale under any circumstances.</p>
+			<div class="wc-bsale-notice wc-bsale-notice-success">
+				<p>
+					<span class="dashicons dashicons-yes"></span> For either of the first two options, the stock of the products in the order will be deducted on Bsale only once, even if multiple events that reduce the stock are triggered in WooCommerce (e.g. when the
+					order status changes to "Processing" and then to "Completed").
+					The plugin will keep track of the items in the order that has already been deducted on Bsale, preventing the stock from being deducted multiple times.
+				</p>
+			</div>
 		</fieldset>
-		<div class="wc-bsale-notice wc-bsale-notice-success">
-			<p>
-				<span class="dashicons dashicons-yes"></span> For either of the first two options, the stock of the products in the order will be deducted on Bsale only once, even if multiple events that reduce the stock are triggered in WooCommerce (e.g. when the
-				order status changes to "Processing" and then to "Completed").
-				The plugin will keep track of the items in the order that has already been deducted on Bsale, preventing the stock from being deducted multiple times.
-			</p>
-		</div>
 		<fieldset>
 			<label>Include the following note in the stock consumption operation in Bsale:
 				<input type="text" id="wc_bsale_transversal[note]" name="wc_bsale_transversal[note]" value="<?php echo esc_attr( $this->settings['transversal']['note'] ?? '' ); ?>" style="width: 100%">

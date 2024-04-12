@@ -107,7 +107,7 @@ class Main implements Setting_Interface {
 
 		add_settings_field(
 			'wc_bsale_product_identifier',
-			'Use the product\'s SKU of WooCommerce to match',
+			'Use the SKU of WooCommerce products to match',
 			array( $this, 'product_identifier_callback' ),
 			'wc-bsale-settings',
 			'wc_bsale_product_identifier_section'
@@ -148,7 +148,14 @@ class Main implements Setting_Interface {
 	 * @return void
 	 */
 	public function product_identifier_section_description(): void {
-		echo '<hr><p>Defines which field in Bsale will be used to identify the products to match them with WooCommerce\'s SKUs.</p>';
+		echo '<hr><p>Defines which field is used to look for the product in Bsale.</p>';
+		?>
+		<div class="wc-bsale-notice wc-bsale-notice-warning">
+			<p>
+				<span class="dashicons dashicons-warning"></span> If a product doesn't have an SKU in WooCommerce, it won't be considered for <strong>any</strong> of the integration processes with Bsale.
+			</p>
+		</div>
+		<?php
 	}
 
 	/**
@@ -162,12 +169,12 @@ class Main implements Setting_Interface {
 			<legend class="screen-reader-text"><span>Product identifier in Bsale</span></legend>
 			<label>
 				<input type="radio" name="wc_bsale_main[product_identifier]" value="code" <?php checked( $this->settings['product_identifier'], 'code' ); ?> />
-				The product code (SKU) in Bsale
+				The product <code>code</code> (SKU) in Bsale
 			</label>
 			<br>
 			<label>
 				<input type="radio" name="wc_bsale_main[product_identifier]" value="barcode" <?php checked( $this->settings['product_identifier'], 'barcode' ); ?> />
-				The product's barcode in Bsale
+				The product's <code>barcode</code> in Bsale
 			</label>
 		</fieldset>
 		<?php

@@ -106,7 +106,7 @@ class Invoice implements Setting_Interface {
 	 * @inheritDoc
 	 */
 	public function get_setting_title(): string {
-		return __( 'Invoice settings', 'wc-bsale' );
+		return __( 'Invoice generation', 'wc-bsale' );
 	}
 
 	/**
@@ -165,7 +165,7 @@ class Invoice implements Setting_Interface {
 
 		foreach ( $entities as $property => $entity_data ) {
 			// Gets the entity ID from the settings according to its key
-			$entity_id  = (int) $this->settings[ $entity_data[0] ];
+			$entity_id = (int) $this->settings[ $entity_data[0] ];
 
 			if ( $entity_id ) {
 				try {
@@ -189,7 +189,7 @@ class Invoice implements Setting_Interface {
 
 		add_settings_section(
 			'wc_bsale_invoice_section',
-			__( 'Invoice settings', 'wc-bsale' ),
+			__( 'Invoice generation', 'wc-bsale' ),
 			array( $this, 'section_description' ),
 			'wc_bsale_invoice'
 		);
@@ -269,7 +269,7 @@ class Invoice implements Setting_Interface {
 	 */
 	public function section_description(): void {
 		?>
-		<hr><p><?php esc_html_e( 'Settings to configure the invoice capabilities of the plugin.', 'wc-bsale' ); ?></p>
+		<hr><p><?php esc_html_e( 'Settings to configure the invoice generation in Bsale.', 'wc-bsale' ); ?></p>
 		<?php
 	}
 
@@ -401,6 +401,7 @@ class Invoice implements Setting_Interface {
 					<span class="dashicons dashicons-visibility"></span>
 					<?php esc_html_e( 'If you don\'t see the price list you are looking for, please make sure it is active and its name is not empty.', 'wc-bsale' ); ?>
 				</p>
+			</div>
 		</fieldset>
 		<?php
 	}
@@ -423,19 +424,19 @@ class Invoice implements Setting_Interface {
 				?>
 			</select>
 			<p class="description"><?php esc_html_e( 'This tax will be used to calculate the net price of the products. That net price will be then send to Bsale in the invoice details.', 'wc-bsale' ); ?></p>
+			<div class="wc-bsale-notice wc-bsale-notice-warning">
+				<p>
+					<span class="dashicons dashicons-warning"></span>
+					<?php esc_html_e( 'If you don\'t select a tax, the electronic invoice will be generated as an exempt invoice.', 'wc-bsale' ); ?>
+				</p>
+			</div>
+			<div class="wc-bsale-notice wc-bsale-notice-info">
+				<p>
+					<span class="dashicons dashicons-visibility"></span>
+					<?php esc_html_e( 'If you don\'t see the tax you are looking for, please make sure it is active and its name is not empty.', 'wc-bsale' ); ?>
+				</p>
+			</div>
 		</fieldset>
-		<div class="wc-bsale-notice wc-bsale-notice-warning">
-			<p>
-				<span class="dashicons dashicons-warning"></span>
-				<?php esc_html_e( 'If you don\'t select a tax, the electronic invoice will be generated as an exempt invoice.', 'wc-bsale' ); ?>
-			</p>
-		</div>
-		<div class="wc-bsale-notice wc-bsale-notice-info">
-			<p>
-				<span class="dashicons dashicons-visibility"></span>
-				<?php esc_html_e( 'If you don\'t see the tax you are looking for, please make sure it is active and its name is not empty.', 'wc-bsale' ); ?>
-			</p>
-		</div>
 		<?php
 	}
 
