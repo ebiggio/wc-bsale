@@ -19,6 +19,12 @@ use WP_Error;
 class API_Client {
 	private string $api_url;
 	private string $access_token;
+	/**
+	 * The type of identifier to use when searching for products in Bsale. Can be 'code' or 'barcode'.
+	 * Keep in mind that the identifier is case-sensitive for **some** endpoints in the sandbox environment. For example, the stock retrieval endpoint uses 'barcode' as the identifier, but the stock consumption endpoint uses 'barCode'.
+	 *
+	 * @var string
+	 */
 	private string $product_identifier;
 	private array|null $bsale_response = null;
 	private WP_Error|null $bsale_wp_error = null;
@@ -26,7 +32,7 @@ class API_Client {
 	public function __construct() {
 		$this->api_url = 'https://api.bsale.io/v1/';
 
-		$main_settings            = maybe_unserialize( get_option( 'wc_bsale_main' ) );
+		$main_settings            = \WC_Bsale\Admin\Settings\Main::get_settings();
 		$this->access_token       = $main_settings['sandbox_access_token'] ?? '';
 		$this->product_identifier = $main_settings['product_identifier'] ?? '';
 	}
@@ -353,6 +359,32 @@ class API_Client {
 		}
 
 		return (array) $variant->items[0];
+	}
+
+	/**
+	 * Gets the price (with taxes) of a variant from a specific price list in Bsale.
+	 *
+	 * @param int    $price_list_id The ID of the price list to get the price from.
+	 * @param string $identifier    The variant's identifier. Can be a variant's code or barcode.
+	 *
+	 * @return float|bool The variant's price from the price list. Will be false if an empty price list ID or identifier was provided, or if no price was found for the provided identifier.
+	 * @throws \Exception If there was an error fetching the price from Bsale.
+	 *
+	 * @link https://docs.bsale.dev/CL/listas-de-precio#get-detalles-de-una-lista-de-precio Bsale API documentation for the price list details endpoint.
+	 */
+	public function get_variant_price_from_price_list( int $price_list_id, string $identifier ): float|bool {
+		if ( 0 === $price_list_id || '' === $identifier ) {
+			return false;
+		}
+
+		$price_details = $this->make_request( 'price_lists/' . $price_list_id . '/details.json?' . $this->product_identifier . '=' . $identifier );
+
+		if ( 0 === $price_details->count ) {
+			// No price found for the variant in the price list provided
+			return false;
+		}
+
+		return (float) $price_details->items[0]->variantValueWithTaxes;
 	}
 
 	/**
