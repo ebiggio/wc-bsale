@@ -34,11 +34,21 @@ class Cron implements API_Consumer {
 	private array $cron_settings;
 	/**
 	 * The stock settings, loaded from the Stock class in the admin settings.
+	 * These settings are needed for the office ID to sync the stock.
 	 *
 	 * @see \WC_Bsale\Admin\Settings\Stock Stock settings class.
 	 * @var array
 	 */
 	private array $stock_settings;
+	/**
+	 * The invoice settings, loaded from the Invoice class in the admin settings.
+	 * These settings are needed for the price list ID to sync the prices.
+	 * If it's not set, the default price list of the office used for the stock sync will be used.
+	 *
+	 * @see \WC_Bsale\Admin\Settings\Invoice Invoice settings class.
+	 * @var array
+	 */
+	private array $invoice_settings;
 	/**
 	 * The invoker of the cron process. This is used to identify the source of the cron process in the logs. Default is 'wp' (WP-Cron)
 	 *
@@ -47,8 +57,9 @@ class Cron implements API_Consumer {
 	private string $invoker = 'wp';
 
 	public function __construct() {
-		$this->cron_settings  = Admin\Settings\Cron::get_settings();
-		$this->stock_settings = Admin\Settings\Stock::get_settings();
+		$this->cron_settings    = Admin\Settings\Cron::get_settings();
+		$this->stock_settings   = Admin\Settings\Stock::get_settings();
+		$this->invoice_settings = Admin\Settings\Invoice::get_settings();
 
 		// Add the database logger as an observer
 		$this->add_observer( DB_Logger::get_instance() );
@@ -126,11 +137,23 @@ class Cron implements API_Consumer {
 	/**
 	 * Executes the cron sync of the plugin.
 	 *
-	 * This method will sync the products with Bsale according to the settings.
-	 * It will check the status, description and stock of the products, and update them if needed.
+	 * This method will sync WooCommerce products with Bsale according to the settings.
+	 * Depending on the cron configuration, it could sync all the products or only specific ones.
+	 * The settings could also list products or variations to be excluded from the sync process, which will be skipped during the process.
+	 * For a product or variation to be synced, it must have a SKU. If not, it will be skipped and a warning will be logged.
+	 *
+	 * The sync process could update:
+	 * - The status of the product (active or inactive)
+	 * - The description of the product
+	 * - The stock of the product or variation - This requires an office ID set in the stock settings, and the product must have the "Manage stock" option enabled
+	 * - The **regular** price of the product or variation - This requires a price list ID set in the invoice settings, or the default price list of the office used for the stock sync will be used
+	 *
+	 * Each of these updates can be enabled or disabled in the settings.
+	 *
+	 * Only when a value is different from the one in Bsale will a product or variation be updated in WooCommerce.
 	 *
 	 * @return bool True if at least one product or variation was updated during the sync process, false otherwise.
-	 *              A product or variation is considered updated if its status, description or stock was updated.
+	 *              A product or variation is considered updated if its status, description, stock or regular price was updated.
 	 *              A return value of false doesn't mean that the process failed, but that no product or variation was updated.
 	 */
 	public function run_sync(): bool {
@@ -171,8 +194,29 @@ class Cron implements API_Consumer {
 		// This is intended to help determine if the cron process updated any product or variation, since this flag will be returned to the caller
 		$product_or_variation_updated = false;
 
+		// Check if a price list ID is set in the settings. If not, get the default price list for the office of the stock settings
+		$price_list_id = (int) $this->invoice_settings['price_list_id'] ?? null;
+
+		if ( ! $price_list_id ) {
+			$office_id = (int) $this->stock_settings['office_id'] ?? null;
+
+			if ( $office_id ) {
+				try {
+					$office_details = $bsale_api_client->get_office_by_id( $office_id );
+					$price_list_id  = $office_details['defaultPriceList'];
+				} catch ( \Exception $e ) {
+					$this->notify_observers_for_cron( '', 'Error getting the office details to obtain its price list: ' . $e->getMessage(), 'error' );
+				}
+			}
+		}
+
 		// Iterate over the products and sync them with Bsale
 		foreach ( $products as $product ) {
+			// Check if the product is in the excluded list. If so, we skip it from the sync process
+			if ( in_array( $product->get_id(), $this->cron_settings['excluded_products'] ) ) {
+				continue;
+			}
+
 			// Check if the product has a SKU. If not, we skip it from the sync process
 			if ( ! $product->get_sku() ) {
 				$this->notify_observers_for_cron( '', sprintf( __( 'Product [%s] has no SKU; skipping', 'wc-bsale' ), $product->get_name() ), 'warning' );
@@ -227,16 +271,19 @@ class Cron implements API_Consumer {
 				}
 			}
 
-			// Check if we need to sync the stock of the product, according to the settings
-			if ( isset( $this->cron_settings['fields']['stock'] ) ) {
+			// Check if we need to sync the stock or price of the product, according to the settings
+			$sync_stock = isset( $this->cron_settings['fields']['stock'] );
+			$sync_price = isset( $this->cron_settings['fields']['price'] ) && $price_list_id;
+
+			if ( $sync_stock || $sync_price ) {
 				// For the stock sync, there must be an office ID set in the stock settings
 				if ( ! $this->stock_settings['office_id'] ) {
 					$this->notify_observers_for_cron( '', __( 'No office ID set in the stock settings for stock sync', 'wc-bsale' ), 'warning' );
 
-					break;
+					$sync_stock = false;
 				}
 
-				// If the product is a variable product, we get the stock of each variation
+				// If the product is a variable product, we must update its variations
 				if ( $product->is_type( 'variable' ) ) {
 					$variations = $product->get_children();
 
@@ -246,67 +293,44 @@ class Cron implements API_Consumer {
 					foreach ( $variations as $variation_id ) {
 						$variation = wc_get_product( $variation_id );
 
-						// Check if the variation has the "Manage stock" option enabled. If not, we skip it from the sync process
-						if ( ! $variation->managing_stock() ) {
-							$this->notify_observers_for_cron( $variation->get_sku(), __( 'Variation has the "Manage stock" option disabled; skipping', 'wc-bsale' ) );
+						if ( $sync_stock ) {
+							$stock_updated = $this->process_stock_sync( $variation, $bsale_api_client );
 
-							continue;
+							if ( $stock_updated ) {
+								$product_or_variation_updated = true;
+							}
 						}
 
-						try {
-							$bsale_stock = $bsale_api_client->get_stock_by_identifier( $variation->get_sku(), $this->stock_settings['office_id'] );
-						} catch ( \Exception $e ) {
-							$this->notify_observers_for_cron( $variation->get_sku(), $e->getMessage(), 'error' );
+						if ( $sync_price ) {
+							$price_updated = $this->process_price_sync( $price_list_id, $variation, $bsale_api_client );
 
-							continue;
-						}
-
-						if ( ! $bsale_stock ) {
-							$this->notify_observers_for_cron( $variation->get_sku(), __( 'The variation does not have a stock in Bsale', 'wc-bsale' ), 'warning' );
-
-							continue;
-						}
-
-						$current_stock = $variation->get_stock_quantity();
-
-						// Check if the stock of the variation is different from the one in Bsale. If so, update the WooCommerce variation
-						if ( $current_stock != $bsale_stock ) {
-							$variation->set_stock_quantity( $bsale_stock );
-							$variation->save();
-
-							$product_or_variation_updated = true;
-
-							$this->notify_observers_for_cron( $variation->get_sku(), sprintf( __( 'Stock of variation updated from %s to %s', 'wc-bsale' ), $current_stock, $bsale_stock ), 'success' );
+							if ( $price_updated ) {
+								$product_or_variation_updated = true;
+							}
 						}
 					}
 				} else {
-					try {
-						$bsale_stock = $bsale_api_client->get_stock_by_identifier( $product->get_sku(), $this->stock_settings['office_id'] );
-					} catch ( \Exception $e ) {
-						$this->notify_observers_for_cron( $product->get_sku(), $e->getMessage(), 'error' );
+					// The product is not a variable product, so we update its stock and price directly
+					if ( $sync_stock ) {
+						$stock_updated = $this->process_stock_sync( $product, $bsale_api_client );
 
-						continue;
+						if ( $stock_updated ) {
+							$product_or_variation_updated = true;
+						}
 					}
 
-					if ( ! $bsale_stock ) {
-						$this->notify_observers_for_cron( $product->get_sku(), __( 'The product does not have a stock in Bsale', 'wc-bsale' ), 'warning' );
+					if ( $sync_price ) {
+						$price_updated = $this->process_price_sync( $price_list_id, $product, $bsale_api_client );
 
-						continue;
-					}
-
-					$current_stock = $product->get_stock_quantity();
-
-					// Check if the stock of the product is different from the one in Bsale. If so, update the WooCommerce product
-					if ( $current_stock != $bsale_stock ) {
-						$product->set_stock_quantity( $bsale_stock );
-						$save_product = true;
-
-						$this->notify_observers_for_cron( $product->get_sku(), sprintf( __( 'Stock of product updated from %s to %s', 'wc-bsale' ), $current_stock, $bsale_stock ), 'success' );
+						if ( $price_updated ) {
+							$product_or_variation_updated = true;
+						}
 					}
 				}
 			}
 
-			// If the product was updated by the sync process, we save it
+			// If the product status or description was updated, we save the product
+			// This is done at the end to avoid saving more than necessary, but if the stock or price was updated, the product was already saved nevertheless
 			if ( $save_product ) {
 				$product->save();
 
@@ -317,5 +341,88 @@ class Cron implements API_Consumer {
 		$this->notify_observers_for_cron( '', __( 'Cron process finished', 'wc-bsale' ) );
 
 		return $product_or_variation_updated;
+	}
+
+	/**
+	 * Process the stock sync of a product or variation.
+	 *
+	 * @param \WC_Product                $product          The product or variation to sync.
+	 * @param \WC_Bsale\Bsale\API_Client $bsale_api_client The Bsale API client object.
+	 *
+	 * @return bool True if the stock was updated, false otherwise.
+	 */
+	private function process_stock_sync( \WC_Product $product, API_Client $bsale_api_client ): bool {
+		if ( ! $product->managing_stock() ) {
+			$this->notify_observers_for_cron( $product->get_sku(), __( '"Manage stock" option disabled; skipping', 'wc-bsale' ) );
+
+			return false;
+		}
+
+		try {
+			$bsale_stock = $bsale_api_client->get_stock_by_identifier( $product->get_sku(), $this->stock_settings['office_id'] );
+		} catch ( \Exception $e ) {
+			$this->notify_observers_for_cron( $product->get_sku(), $e->getMessage(), 'error' );
+
+			return false;
+		}
+
+		if ( ! $bsale_stock ) {
+			$this->notify_observers_for_cron( $product->get_sku(), __( 'No stock found in Bsale', 'wc-bsale' ), 'warning' );
+
+			return false;
+		}
+
+		$current_stock = $product->get_stock_quantity();
+
+		// Check if the stock of the producto is different from the one in Bsale. If so, update the WooCommerce stock
+		if ( $current_stock != $bsale_stock ) {
+			$product->set_stock_quantity( $bsale_stock );
+			$product->save();
+
+			$this->notify_observers_for_cron( $product->get_sku(), sprintf( __( 'Stock updated from %s to %s', 'wc-bsale' ), $current_stock, $bsale_stock ), 'success' );
+
+			return true;
+		}
+
+		return false;
+	}
+
+	/**
+	 * Process the price sync of a product or variation.
+	 *
+	 * @param int                        $price_list_id    The price list ID to get the price from Bsale.
+	 * @param \WC_Product                $product          The product or variation to sync.
+	 * @param \WC_Bsale\Bsale\API_Client $bsale_api_client The Bsale API client object.
+	 *
+	 * @return bool True if the price was updated, false otherwise.
+	 */
+	private function process_price_sync( int $price_list_id, \WC_Product $product, API_Client $bsale_api_client ): bool {
+		try {
+			$bsale_price = $bsale_api_client->get_variant_price_from_price_list( $price_list_id, $product->get_sku() );
+		} catch ( \Exception $e ) {
+			$this->notify_observers_for_cron( $product->get_sku(), $e->getMessage(), 'error' );
+
+			return false;
+		}
+
+		if ( ! $bsale_price ) {
+			$this->notify_observers_for_cron( $product->get_sku(), __( 'No price found in Bsale', 'wc-bsale' ), 'warning' );
+
+			return false;
+		}
+
+		$current_price = (float) $product->get_price( 'edit' );
+
+		// Check if the price of the product is different from the one in Bsale. If so, update the WooCommerce price
+		if ( $current_price != $bsale_price ) {
+			$product->set_regular_price( $bsale_price );
+			$product->save();
+
+			$this->notify_observers_for_cron( $product->get_sku(), sprintf( __( 'Price updated from %s to %s', 'wc-bsale' ), $current_price, $bsale_price ), 'success' );
+
+			return true;
+		}
+
+		return false;
 	}
 }
