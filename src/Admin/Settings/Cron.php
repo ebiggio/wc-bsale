@@ -138,7 +138,7 @@ class Cron implements Setting_Interface {
 		}
 
 		// Validate the field checkboxes
-		$valid_fields                     = array( 'status', 'description', 'stock' );
+		$valid_fields                     = array( 'status', 'description', 'stock', 'price' );
 		$_POST['wc_bsale_cron']['fields'] = array_intersect( $_POST['wc_bsale_cron']['fields'], $valid_fields );
 
 		// Check the sync mode
@@ -457,7 +457,18 @@ class Cron implements Setting_Interface {
 			<div class="wc-bsale-notice wc-bsale-notice-info">
 				<p>
 					<span class="dashicons dashicons-visibility"></span>
-					Remember that for a product's stock to be synced with Bsale, the product (or its variations) must have a SKU and its stock management must be enabled.
+					Remember that for a product's stock to be synced with Bsale, the product (or its variations) must have the "Manage stock" option enabled.
+				</p>
+			</div>
+			<label>
+				<input type="checkbox" name="wc_bsale_cron[fields][price]" value="price" <?php checked( in_array( 'price', $this->settings['fields'], true ) ); ?>>
+				Price
+			</label>
+			<div class="wc-bsale-notice wc-bsale-notice-warning">
+				<p>
+					<span class="dashicons dashicons-info"></span>
+					For the price sync, the price list set in the <a href="<?php echo esc_url( admin_url( 'admin.php?page=wc-bsale-settings&tab=invoice' ) ); ?>">Invoice generation</a> settings will be used to look for the price of the products.
+					If no price list is set, the price list assigned to the stock office will be used.
 				</p>
 			</div>
 		</fieldset>

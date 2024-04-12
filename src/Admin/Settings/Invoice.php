@@ -396,6 +396,12 @@ class Invoice implements Setting_Interface {
 				?>
 			</select>
 			<p class="description"><?php esc_html_e( 'Select the price list to use with the invoice. If no price list is selected, the default price list of the selected office will be used.', 'wc-bsale' ); ?></p>
+			<div class="wc-bsale-notice wc-bsale-notice-warning">
+				<p>
+					<span class="dashicons dashicons-warning"></span>
+					<?php esc_html_e( 'This price list will also be used in the cron process to look for the prices of the products in Bsale, if the cron job is enabled an set to sync prices. If no price list is selected, the default price list of the office for the stock synchronization will be used.', 'wc-bsale' ); ?>
+				</p>
+			</div>
 			<div class="wc-bsale-notice wc-bsale-notice-info">
 				<p>
 					<span class="dashicons dashicons-visibility"></span>
