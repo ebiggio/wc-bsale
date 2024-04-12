@@ -1,6 +1,6 @@
 # ![Bsale Icon](/assets/images/bsale_icon.png) WooCommerce Bsale Integration Plugin for Chile
 
-*Version: 0.6.0*
+*Version: 0.7.0*
 
 ### Work in Progress
 
@@ -14,7 +14,7 @@ The WooCommerce Bsale Integration Plugin is designed to improve the WooCommerce 
 
 - **Stock synchronization**: The plugin has several options to keep the stock levels in sync with Bsale, including manual, scheduled, and real-time stock updates. The real-time updates can be triggered by actions either in the admin area or on the storefront, and can be activated or deactivated according to your needs.
 
-- **Price synchronization**: Planned feature.
+- **Price synchronization**: The plugin can also keep the prices in sync with Bsale, allowing you to update the regular prices of your products in WooCommerce with the prices in Bsale, by using the scheduled (cron) price sync feature.
 
 - **Invoice generation**: Ability to generate invoices in Bsale when an order changes status to a specific one, which can be configured in the settings page.
 
