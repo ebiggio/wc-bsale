@@ -180,18 +180,6 @@ class Cron implements API_Consumer {
 				continue;
 			}
 
-			// Check if the product has the "Manage stock" option enabled. If not, we skip it from the sync process
-			if ( ! $product->managing_stock() ) {
-				$this->notify_observers_for_cron( $product->get_sku(), __( 'Product has the "Manage stock" option disabled; skipping', 'wc-bsale' ) );
-
-				continue;
-			}
-
-			// Check if the product is in the excluded list. If so, we skip it from the sync process
-			if ( in_array( $product->get_id(), $this->cron_settings['excluded_products'] ) ) {
-				continue;
-			}
-
 			// Get the Bsale variation data by the product SKU. In Bsale, a variation is a product
 			try {
 				$bsale_product = $bsale_api_client->get_variant_by_identifier( $product->get_sku() );
