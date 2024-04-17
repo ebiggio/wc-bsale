@@ -533,7 +533,7 @@ class Invoice implements Setting_Interface {
 	 */
 	public function order_list_callback(): void {
 		?>
-		<fieldset>
+		<fieldset class="wc-bsale-related-fieldset">
 			<legend class="screen-reader-text"><span><?php esc_html_e( 'Display the invoice status', 'wc-bsale' ); ?></span></legend>
 			<label>
 				<input type="checkbox" name="wc_bsale_invoice[display][order_list_add_column]" value="1" <?php checked( $this->settings['display']['order_list_add_column'] ?? false ); ?>>
