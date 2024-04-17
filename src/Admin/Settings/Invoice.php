@@ -69,7 +69,12 @@ class Invoice implements Setting_Interface {
 				'price_list_id' => 0,
 				'tax_id'        => 0,
 				'declare_sii'   => 0,
-				'send_email'    => 0
+				'send_email'    => 0,
+				'display'       => array(
+					'order_list_add_column'     => 1,
+					'order_list_include_filter' => 1,
+					'order_details_meta_box'    => 1,
+				)
 			);
 		}
 
@@ -98,6 +103,11 @@ class Invoice implements Setting_Interface {
 		$settings['tax_id']        = (int) isset( $_POST['wc_bsale_invoice']['tax_id'] ) ? $_POST['wc_bsale_invoice']['tax_id'] : 0;
 		$settings['declare_sii']   = isset( $_POST['wc_bsale_invoice']['declare_sii'] ) ? 1 : 0;
 		$settings['send_email']    = isset( $_POST['wc_bsale_invoice']['send_email'] ) ? 1 : 0;
+		$settings['display']       = array(
+			'order_list_add_column'     => isset( $_POST['wc_bsale_invoice']['display']['order_list_add_column'] ) ? 1 : 0,
+			'order_list_include_filter' => isset( $_POST['wc_bsale_invoice']['display']['order_list_include_filter'] ) ? 1 : 0,
+			'order_details_meta_box'    => isset( $_POST['wc_bsale_invoice']['display']['order_details_meta_box'] ) ? 1 : 0,
+		);
 
 		return $settings;
 	}
@@ -256,6 +266,29 @@ class Invoice implements Setting_Interface {
 			array( $this, 'send_email_callback' ),
 			'wc_bsale_invoice',
 			'wc_bsale_invoice_section'
+		);
+
+		add_settings_section(
+			'wc_bsale_invoice_display_section',
+			__( 'Display invoice data', 'wc-bsale' ),
+			array( $this, 'display_section_description' ),
+			'wc_bsale_invoice'
+		);
+
+		add_settings_field(
+			'wc_bsale_invoice_display_order_list',
+			__( 'In the order list', 'wc-bsale' ),
+			array( $this, 'order_list_callback' ),
+			'wc_bsale_invoice',
+			'wc_bsale_invoice_display_section'
+		);
+
+		add_settings_field(
+			'wc_bsale_invoice_display_order_details',
+			__( 'When viewing an order', 'wc-bsale' ),
+			array( $this, 'order_details_callback' ),
+			'wc_bsale_invoice',
+			'wc_bsale_invoice_display_section'
 		);
 
 		settings_fields( 'wc_bsale_invoice_settings_group' );
@@ -478,6 +511,60 @@ class Invoice implements Setting_Interface {
 				<?php esc_html_e( 'Send the invoice to the customer\'s email', 'wc-bsale' ); ?>
 			</label>
 			<p class="description"><?php esc_html_e( 'Check this option if you would like instruct Bsale to send the invoice to the customer by email. For this, the customer\'s firstname and email will be sent in the invoice data.', 'wc-bsale' ); ?></p>
+		</fieldset>
+		<?php
+	}
+
+	/**
+	 * Callback for the display section description.
+	 *
+	 * @return void
+	 */
+	public function display_section_description(): void {
+		?>
+		<hr><p><?php esc_html_e( 'Settings that manage the display of the invoice data in the order list and order details in the admin.', 'wc-bsale' ); ?></p>
+		<?php
+	}
+
+	/**
+	 * Callback for the order list field.
+	 *
+	 * @return void
+	 */
+	public function order_list_callback(): void {
+		?>
+		<fieldset>
+			<legend class="screen-reader-text"><span><?php esc_html_e( 'Display the invoice status', 'wc-bsale' ); ?></span></legend>
+			<label>
+				<input type="checkbox" name="wc_bsale_invoice[display][order_list_add_column]" value="1" <?php checked( $this->settings['display']['order_list_add_column'] ?? false ); ?>>
+				<?php esc_html_e( 'Display the invoice status', 'wc-bsale' ); ?>
+			</label>
+			<p class="description"><?php esc_html_e( 'Check this option if you would like to display the invoice status in the order list. The status will be displayed in a new column, after the order status, with the text "Generated" if the invoice has been generated for that order.', 'wc-bsale' ); ?></p>
+			<br>
+			<legend class="screen-reader-text"><span><?php esc_html_e( 'Include a filter by invoice status', 'wc-bsale' ); ?></span></legend>
+			<label>
+				<input type="checkbox" name="wc_bsale_invoice[display][order_list_include_filter]" value="1" <?php checked( $this->settings['display']['order_list_include_filter'] ?? false ); ?>>
+				<?php esc_html_e( 'Include a filter to search by invoice status', 'wc-bsale' ); ?>
+			</label>
+			<p class="description"><?php esc_html_e( 'Check this option if you would like to display a filter in the order list to search by invoice status. The filter will be displayed in the top of the order list, with the options to filter orders according to the invoice status: "All", "Generated" and "Not generated".', 'wc-bsale' ); ?></p>
+		</fieldset>
+		<?php
+	}
+
+	/**
+	 * Callback for the order details field.
+	 *
+	 * @return void
+	 */
+	public function order_details_callback(): void {
+		?>
+		<fieldset>
+			<legend class="screen-reader-text"><span><?php esc_html_e( 'Display the invoice details', 'wc-bsale' ); ?></span></legend>
+			<label>
+				<input type="checkbox" name="wc_bsale_invoice[display][order_details_meta_box]" value="1" <?php checked( $this->settings['display']['order_details_meta_box'] ?? false ); ?>>
+				<?php esc_html_e( 'Display the invoice details in a meta box', 'wc-bsale' ); ?>
+			</label>
+			<p class="description"><?php esc_html_e( 'Check this option if you would like to display the invoice details when viewing an order details. If enabled, a meta box will show the invoice number, link to view the invoice, and the total amount of the invoice if the invoice was generated for that order. If the invoice has not been generated yet and the order status is the one configured in the plugin settings, a button to generate the invoice will be displayed.', 'wc-bsale' ); ?></p>
 		</fieldset>
 		<?php
 	}
