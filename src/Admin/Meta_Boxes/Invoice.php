@@ -33,12 +33,20 @@ class Invoice {
 	 */
 	private array $settings;
 
+	/**
+	 * Constructor
+	 */
 	public function __construct() {
+		$this->settings = \WC_Bsale\Admin\Settings\Invoice::get_settings();
+
+		// Check if the meta box should be displayed
+		if ( ! $this->settings['display']['order_details_meta_box'] ) {
+			return;
+		}
+
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_assets' ) );
 
 		add_action( 'add_meta_boxes', array( $this, 'add_meta_box' ) );
-
-		$this->settings = \WC_Bsale\Admin\Settings\Invoice::get_settings();
 
 		// Check for the success transient to show a success message if an invoice was generated successfully
 		if ( get_transient( 'wc_bsale_invoice_success' ) ) {
