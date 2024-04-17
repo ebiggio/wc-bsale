@@ -29,6 +29,9 @@ class Admin_Init {
 		// Add the admin hooks for the order items
 		new Hooks\Order_Items();
 
+		// Add the admin hooks for the order list
+		new Hooks\Order_List();
+
 		// Load the AJAX handlers
 		new Ajax_Handler();
 
