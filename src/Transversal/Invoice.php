@@ -197,8 +197,8 @@ class Invoice implements API_Consumer {
 		// Add the shipping cost as a product in the invoice
 		if ( $shipping_cost > 0 ) {
 			$invoice_details[] = array(
-				'comment'      => __( 'Shipping cost', 'wc-bsale' ),
-				'netUnitValue' => round( $shipping_cost, 2 ),
+				'comment'      => $order->get_shipping_method(),
+				'netUnitValue' => $shipping_cost,
 				'quantity'     => 1,
 				'taxId'        => array( $tax_id )
 			);
