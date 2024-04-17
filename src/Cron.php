@@ -164,6 +164,8 @@ class Cron implements API_Consumer {
 
 		$this->notify_observers_for_cron( '', __( 'Starting the cron process', 'wc-bsale' ) );
 
+		$script_start_time = microtime( true );
+
 		// If the sync mode is set to specific products, check if there are products configured to be synced
 		if ( 'specific' == $this->cron_settings['catalog'] ) {
 			$products_id = $this->cron_settings['products'];
@@ -338,7 +340,7 @@ class Cron implements API_Consumer {
 			}
 		}
 
-		$this->notify_observers_for_cron( '', __( 'Cron process finished', 'wc-bsale' ) );
+		$this->notify_observers_for_cron( '', __( 'Cron process finished in ' . number_format( microtime( true ) - $script_start_time, 2 ) . ' seconds', 'wc-bsale' ) );
 
 		return $product_or_variation_updated;
 	}
