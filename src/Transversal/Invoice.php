@@ -161,7 +161,6 @@ class Invoice implements API_Consumer {
 		$invoice_details = array();
 
 		foreach ( $order->get_items() as $item ) {
-			// TODO Check if the product has a SKU
 			// TODO Check if a price was paid for the product
 			// TODO Logic for grouped products
 			if ( $item->get_variation_id() > 0 ) {
@@ -176,11 +175,23 @@ class Invoice implements API_Consumer {
 			// Calculate the net unit value (price without the configured tax)
 			$net_unit_value = $product_price_paid / ( 1 + ( $tax_data['percentage'] / 100 ) );
 
-			$invoice_details[] = array(
-				'identifier'   => $product->get_sku(),
-				'netUnitValue' => round( $net_unit_value, 2 ),
-				'quantity'     => $item->get_quantity()
-			);
+			if ( $product->get_sku() ) {
+				// If the product has a SKU, we use it as the identifier
+				$invoice_details[] = array(
+					'identifier'   => $product->get_sku(),
+					'netUnitValue' => $net_unit_value,
+					'quantity'     => $item->get_quantity()
+				);
+			} else {
+				// If the product doesn't have a SKU, we use the name as a comment and send the tax ID as an array
+				$invoice_details[] = array(
+					'comment'      => $product->get_name(),
+					'netUnitValue' => $net_unit_value,
+					'quantity'     => $item->get_quantity(),
+					// We must send the tax ID as an array, even if it's just one tax
+					'taxId'        => array( $tax_id )
+				);
+			}
 		}
 
 		// Add the shipping cost as a product in the invoice
@@ -189,7 +200,6 @@ class Invoice implements API_Consumer {
 				'comment'      => __( 'Shipping cost', 'wc-bsale' ),
 				'netUnitValue' => round( $shipping_cost, 2 ),
 				'quantity'     => 1,
-				// We must send the tax ID as an array, even if it's just one tax
 				'taxId'        => array( $tax_id )
 			);
 		}
