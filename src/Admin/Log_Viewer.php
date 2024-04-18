@@ -176,31 +176,33 @@ class Log_Viewer extends \WP_List_Table {
 			case 'event_trigger':
 				return $item[ $column_name ];
 			case 'identifier':
-				return $this->generate_admin_url( $item['event_trigger'], $item[ $column_name ] );
+				return $this->generate_admin_url( $item['event_type'], $item[ $column_name ] );
 			default:
 				return print_r( $item, true ); // Show the whole array for troubleshooting purposes
 		}
 	}
 
 	/**
-	 * Generate an admin URL for the identifier column, according to the event trigger.
+	 * Generate an admin URL for the identifier column, according to the event type.
 	 *
-	 * @param string $event_trigger The event trigger that caused the log entry (name of the method that triggered the event).
-	 * @param string $identifier    The identifier related to the event: a product SKU or an order ID.
+	 * @param string $event_type The event type that caused the log entry.
+	 * @param string $identifier The identifier related to the event: a product SKU or an order ID.
 	 *
 	 * @return string The URL to the product or order edit page. If no URL is generated, returns the original identifier or a message indicating that the product or order was not found.
 	 */
-	private function generate_admin_url( string $event_trigger, string $identifier ): string {
+	private function generate_admin_url( string $event_type, string $identifier ): string {
 		$identifier_url = $identifier;
 
 		if ( ! $identifier ) {
 			return $identifier_url;
 		}
 
-		switch ( $event_trigger ) {
-			case 'add_to_cart':
-			case 'check_cart_items_checkout':
-			case 'cron':
+		switch ( $event_type ) {
+			case 'get_bsale_variant':
+			case 'stock_update':
+			case 'status_update':
+			case 'description_update':
+			case 'price_update':
 				// The identifier is a product or variation SKU
 				$product_id = wc_get_product_id_by_sku( $identifier );
 
@@ -225,7 +227,7 @@ class Log_Viewer extends \WP_List_Table {
 				$identifier_url = '<a href="' . $edit_url . '" target="_blank" >' . $text_link . ' SKU [' . $identifier . ']' . '</a>';
 				break;
 			case 'consume_bsale_stock':
-			case 'generate_invoice':
+			case 'invoice_generation':
 				// The identifier is an order ID
 				$order_id = (int) $identifier;
 				$order    = wc_get_order( $order_id );
@@ -275,8 +277,7 @@ class Log_Viewer extends \WP_List_Table {
 			<h1><?php _e( 'Operations log', 'wc-bsale' ); ?></h1>
 			<div>
 				<p>
-					<?php _e( 'This page shows the unsupervised operations that have been performed by the plugin, such as stock updates triggered by storefront events and stock consumption triggered by order status changes.
-					The actions that display a message to the user (such as stock updates triggered by the admin) are not logged here.', 'wc-bsale' ); ?>
+					<?php _e( 'This page shows the operations that have been performed by the plugin, such as stock updates, stock consumption and invoice creation.', 'wc-bsale' ); ?>
 				</p>
 				<div class="wc-bsale-notice wc-bsale-notice-info">
 					<p>
