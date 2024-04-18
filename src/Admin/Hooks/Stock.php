@@ -11,13 +11,21 @@ namespace WC_Bsale\Admin\Hooks;
 defined( 'ABSPATH' ) || exit;
 
 use WC_Bsale\Bsale\API_Client;
+use WC_Bsale\DB_Logger;
+use WC_Bsale\Interfaces\API_Consumer;
+use WC_Bsale\Interfaces\Observer;
 
 /**
  * Stock class
- *
- * This class doesn't implement the API_Consumer interface, since the results of the operations are shown directly to the user in the admin through notices.
  */
-class Stock {
+class Stock implements API_Consumer {
+	/**
+	 * The observers that will be notified when an event is triggered.
+	 *
+	 * @see Observer The Observer interface.
+	 * @var array
+	 */
+	private array $observers = array();
 	/**
 	 * The ID of the office to sync the stock with.
 	 *
@@ -33,6 +41,9 @@ class Stock {
 	private array $admin_stock_settings;
 
 	public function __construct() {
+		// Add the database logger as an observer
+		$this->add_observer( DB_Logger::get_instance() );
+
 		$stock_settings = \WC_Bsale\Admin\Settings\Stock::get_settings();
 
 		// If there are no stock settings, we don't need to add the hooks
@@ -54,7 +65,23 @@ class Stock {
 			return;
 		}
 
-		add_action( 'load-post.php', array( $this, 'wc_bsale_product_edit_hook' ) );
+		add_action( 'load-post.php', array( $this, 'check_and_sync_stock' ) );
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public function add_observer( Observer $observer ): void {
+		$this->observers[] = $observer;
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public function notify_observers( string $event_trigger, string $event_type, string $identifier, string $message, string $result_code = 'info' ): void {
+		foreach ( $this->observers as $observer ) {
+			$observer->update( $event_trigger, $event_type, $identifier, $message, $result_code );
+		}
 	}
 
 	/**
@@ -83,7 +110,7 @@ class Stock {
 	 * @return void
 	 * @throws \Exception
 	 */
-	public function wc_bsale_product_edit_hook(): void {
+	public function check_and_sync_stock(): void {
 		$screen = get_current_screen();
 
 		if ( 'product' !== $screen->id ) {
@@ -143,9 +170,13 @@ class Stock {
 						continue;
 					}
 
-					if ( false !== $bsale_stock ) {
+					$current_stock = (int) $variation->get_stock_quantity();
+
+					if ( $bsale_stock && $current_stock !== $bsale_stock ) {
 						wc_update_product_stock( $variation, $bsale_stock );
 						$variations_synced[ $variation_id ] = $variation;
+
+						$this->notify_observers( 'admin.stock.edit_product', 'stock_update', $sku, sprintf( 'Stock updated from %s to %s', $current_stock, $bsale_stock ), 'success' );
 					}
 				}
 			}
@@ -160,17 +191,19 @@ class Stock {
 
 				$sku = $variation->get_sku();
 
-				try {
-					$bsale_stock = $bsale_api->get_stock_by_identifier( $sku, $this->office_id );
-				} catch ( \Exception $e ) {
-					$message = sprintf( esc_html__( 'An error occurred while trying to fetch the stock of the variation [%s] from Bsale. Please try again later.', 'wc-bsale' ), $variation->get_sku() );
-					$this->show_admin_notice( $message, 'error' );
+				if ( ! isset ( $bsale_stock ) ) {
+					try {
+						$bsale_stock = $bsale_api->get_stock_by_identifier( $sku, $this->office_id );
+					} catch ( \Exception $e ) {
+						$message = sprintf( esc_html__( 'An error occurred while trying to fetch the stock of the variation [%s] from Bsale. Please try again later.', 'wc-bsale' ), $variation->get_sku() );
+						$this->show_admin_notice( $message, 'error' );
 
-					continue;
+						continue;
+					}
 				}
 
 				// If the variation has no stock in Bsale, we show a message to the user notifying them of this
-				if ( false === $bsale_stock ) {
+				if ( ! $bsale_stock ) {
 					$message = sprintf( esc_html__( 'No stock was found in Bsale for [%s]. Please check if this variation\'s SKU exists in Bsale, and has stock for the selected office.', 'wc-bsale' ), $sku );
 					$this->show_admin_notice( $message, 'warning' );
 
@@ -178,7 +211,7 @@ class Stock {
 				}
 
 				// If the variation has stock in Bsale, we compare it with the stock in WooCommerce
-				$wc_stock = (int) get_post_meta( $variation->get_id(), '_stock', true );
+				$wc_stock = (int) $variation->get_stock_quantity();
 
 				if ( $wc_stock === $bsale_stock ) {
 					$message = sprintf( esc_html__( 'The stock of the variation [%s] is the same as the stock in Bsale.', 'wc-bsale' ), $variation->get_sku() );
@@ -226,7 +259,7 @@ class Stock {
 			return;
 		}
 
-		$wc_stock  = (int) get_post_meta( $product->get_id(), '_stock', true );
+		$wc_stock  = (int) $product->get_stock_quantity();
 		$bsale_api = new API_Client();
 
 		try {
@@ -256,6 +289,8 @@ class Stock {
 		// If the user has clicked the "Sync Stock" button or the settings to sync automatically is enabled, we update the product's stock with the stock in Bsale
 		if ( isset( $_POST['wc_bsale_sync_stock'] ) || $this->admin_stock_settings['auto_update'] ) {
 			wc_update_product_stock( $product, $bsale_stock );
+
+			$this->notify_observers( 'admin.stock.edit_product', 'stock_update', $sku, sprintf( 'Stock updated from %s to %s', $wc_stock, $bsale_stock ), 'success' );
 
 			$message = esc_html__( 'The stock of this product has been synced with the stock in Bsale.', 'wc-bsale' );
 			$this->show_admin_notice( $message, 'success' );
