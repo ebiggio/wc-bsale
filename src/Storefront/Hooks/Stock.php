@@ -23,6 +23,13 @@ use WC_Bsale\Interfaces\Observer;
  */
 class Stock implements API_Consumer {
 	/**
+	 * The observers that will be notified when an event is triggered.
+	 *
+	 * @see Observer The Observer interface.
+	 * @var array
+	 */
+	private array $observers = array();
+	/**
 	 * The ID of the office to use when syncing the stock.
 	 *
 	 * @var int
@@ -35,14 +42,11 @@ class Stock implements API_Consumer {
 	 * @var array
 	 */
 	private array $storefront_stock_settings;
-	/**
-	 * The observers that will be notified when an event is triggered.
-	 *
-	 * @var array
-	 */
-	private array $observers = array();
 
 	public function __construct() {
+		// Add the database logger as an observer
+		$this->add_observer( DB_Logger::get_instance() );
+
 		$stock_settings = \WC_Bsale\Admin\Settings\Stock::get_settings();
 
 		// If there are no stock settings, we don't need to add the hooks
@@ -71,9 +75,6 @@ class Stock implements API_Consumer {
 		if ( $this->storefront_stock_settings['checkout'] ) {
 			add_action( 'woocommerce_check_cart_items', array( $this, 'check_cart_items_checkout' ) );
 		}
-
-		// Add the database logger as an observer
-		$this->add_observer( DB_Logger::get_instance() );
 	}
 
 	/**
@@ -88,7 +89,7 @@ class Stock implements API_Consumer {
 	 */
 	public function notify_observers( string $event_trigger, string $event_type, string $identifier, string $message, string $result_code = 'info' ): void {
 		foreach ( $this->observers as $observer ) {
-			$observer->update( $event_trigger, $event_type, $identifier, $message, $result_code );
+			$observer->update( 'storefront.stock.' . $event_trigger, $event_type, $identifier, $message, $result_code );
 		}
 	}
 

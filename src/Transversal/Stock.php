@@ -22,6 +22,7 @@ class Stock implements API_Consumer {
 	/**
 	 * The observers that will be notified when an event is triggered.
 	 *
+	 * @see Observer The Observer interface.
 	 * @var array
 	 */
 	private array $observers = array();
@@ -182,11 +183,11 @@ class Stock implements API_Consumer {
 		$bsale_stock_consumed = $bsale_api_client->consume_stock( $formatted_note, $office_id, $products_to_consume_stock );
 
 		if ( $bsale_stock_consumed ) {
-			$this->notify_observers( 'consume_bsale_stock', 'stock_consumption', $order_number, 'Stock successfully consumed in Bsale', 'success' );
+			$this->notify_observers( 'stock_consumption', 'consume_bsale_stock', $order_number, 'Stock successfully consumed in Bsale', 'success' );
 		} else {
 			$bsale_error = $bsale_api_client->get_last_wp_error();
 
-			$this->notify_observers( 'consume_bsale_stock', 'stock_consumption', $order_number, 'Error consuming stock in Bsale: ' . $bsale_error->get_error_message(), 'error' );
+			$this->notify_observers( 'stock_consumption', 'consume_bsale_stock', $order_number, 'Error consuming stock in Bsale: ' . $bsale_error->get_error_message(), 'error' );
 		}
 
 		return $bsale_stock_consumed;

@@ -50,19 +50,19 @@ class Cron implements API_Consumer {
 	 */
 	private array $invoice_settings;
 	/**
-	 * The invoker of the cron process. This is used to identify the source of the cron process in the logs. Default is 'wp' (WP-Cron)
+	 * The invoker of the cron process. This is used to identify the source of the cron process in the logs. Default is 'wp-cron'.
 	 *
 	 * @var string
 	 */
-	private string $invoker = 'wp';
+	private string $invoker = 'wp-cron';
 
 	public function __construct() {
+		// Add the database logger as an observer
+		$this->add_observer( DB_Logger::get_instance() );
+
 		$this->cron_settings    = Admin\Settings\Cron::get_settings();
 		$this->stock_settings   = Admin\Settings\Stock::get_settings();
 		$this->invoice_settings = Admin\Settings\Invoice::get_settings();
-
-		// Add the database logger as an observer
-		$this->add_observer( DB_Logger::get_instance() );
 
 		// Add the plugin query var to the query vars list if the cron mode is set to "external"
 		if ( 'external' == $this->cron_settings['mode'] ) {
@@ -93,18 +93,17 @@ class Cron implements API_Consumer {
 	}
 
 	/**
-	 * Wrapper method to notify the observers for the cron process.
+	 * Wrapper method to notify the observers for the cron process, that sets the $event_trigger to the invoker of the cron process.
 	 *
-	 * Sets the $event_trigger to the invoker of the cron process, and the $event_type to 'cron'.
-	 *
+	 * @param string $event_type  The type of the event (stock update, price update, etc.). Could also be an empty string if the event is not related to a specific product or variation.
 	 * @param string $identifier  The identifier of the event, usually a product or variation SKU.
 	 * @param string $message     The message to log.
 	 * @param string $result_code The result code of the operation. Can only be 'info', 'success', 'warning' or 'error'.
 	 *
 	 * @return void
 	 */
-	private function notify_observers_for_cron( string $identifier, string $message, string $result_code = 'info' ): void {
-		$this->notify_observers( $this->invoker, 'cron', $identifier, $message, $result_code );
+	private function notify_observers_for_cron( string $event_type, string $identifier, string $message, string $result_code = 'info' ): void {
+		$this->notify_observers( $this->invoker, $event_type, $identifier, $message, $result_code );
 	}
 
 	/**
@@ -162,7 +161,7 @@ class Cron implements API_Consumer {
 			return false;
 		}
 
-		$this->notify_observers_for_cron( '', __( 'Starting the cron process', 'wc-bsale' ) );
+		$this->notify_observers_for_cron( '', '', __( 'Starting the cron process', 'wc-bsale' ) );
 
 		$script_start_time = microtime( true );
 
@@ -171,7 +170,7 @@ class Cron implements API_Consumer {
 			$products_id = $this->cron_settings['products'];
 
 			if ( empty( $products_id ) ) {
-				$this->notify_observers_for_cron( '', __( 'Cron settings set to sync specific products, but no products are configured', 'wc-bsale' ), 'warning' );
+				$this->notify_observers_for_cron( '', '', __( 'Cron settings set to sync specific products, but no products are configured', 'wc-bsale' ), 'warning' );
 
 				return false;
 			}
@@ -185,7 +184,7 @@ class Cron implements API_Consumer {
 
 		// If there are no products to sync, we stop the process
 		if ( empty( $products ) ) {
-			$this->notify_observers_for_cron( '', __( 'No products were found to sync', 'wc-bsale' ), 'warning' );
+			$this->notify_observers_for_cron( '', '', __( 'No products were found to sync', 'wc-bsale' ), 'warning' );
 
 			return false;
 		}
@@ -207,7 +206,7 @@ class Cron implements API_Consumer {
 					$office_details = $bsale_api_client->get_office_by_id( $office_id );
 					$price_list_id  = $office_details['defaultPriceList'];
 				} catch ( \Exception $e ) {
-					$this->notify_observers_for_cron( '', 'Error getting the office details to obtain its price list: ' . $e->getMessage(), 'error' );
+					$this->notify_observers_for_cron( '', '', 'Error getting the office details to obtain its price list: ' . $e->getMessage(), 'error' );
 				}
 			}
 		}
@@ -221,7 +220,7 @@ class Cron implements API_Consumer {
 
 			// Check if the product has a SKU. If not, we skip it from the sync process
 			if ( ! $product->get_sku() ) {
-				$this->notify_observers_for_cron( '', sprintf( __( 'Product [%s] has no SKU; skipping', 'wc-bsale' ), $product->get_name() ), 'warning' );
+				$this->notify_observers_for_cron( '', '', sprintf( __( 'Product [%s] has no SKU; skipping', 'wc-bsale' ), $product->get_name() ), 'warning' );
 
 				continue;
 			}
@@ -230,14 +229,14 @@ class Cron implements API_Consumer {
 			try {
 				$bsale_product = $bsale_api_client->get_variant_by_identifier( $product->get_sku() );
 			} catch ( \Exception $e ) {
-				$this->notify_observers_for_cron( $product->get_sku(), $e->getMessage(), 'error' );
+				$this->notify_observers_for_cron( 'get_bsale_variant', $product->get_sku(), $e->getMessage(), 'error' );
 
 				continue;
 			}
 
 			// If the product is not found in Bsale, we skip all the sync process and notify the observers
 			if ( ! $bsale_product ) {
-				$this->notify_observers_for_cron( $product->get_sku(), __( 'Product not found in Bsale', 'wc-bsale' ), 'warning' );
+				$this->notify_observers_for_cron( 'get_bsale_variant', $product->get_sku(), __( 'Product not found in Bsale', 'wc-bsale' ), 'warning' );
 
 				continue;
 			}
@@ -251,14 +250,16 @@ class Cron implements API_Consumer {
 				 * In Bsale, a status of 0 means active
 				 * Bsale uses the term "state" instead of "status", which is what WooCommerce uses. We assign it to a variable to make the code more readable
 				 */
-				$bsale_status = $bsale_product['state'];
+				$bsale_status = $bsale_product['state'] == 0 ? 'publish' : 'draft';
 
-				if ( $product->get_status() != ( $bsale_status == 0 ? 'publish' : 'draft' ) ) {
-					$new_status = $bsale_status == 0 ? 'publish' : 'draft';
+				if ( $product->get_status() != $bsale_status ) {
+					$previous_status = $product->get_status();
+					$new_status      = $bsale_status;
+
 					$product->set_status( $new_status );
 					$save_product = true;
 
-					$this->notify_observers_for_cron( $product->get_sku(), sprintf( __( 'Product status updated to [%s]', 'wc-bsale' ), __( $new_status, 'wc-bsale' ) ), 'success' );
+					$this->notify_observers_for_cron( 'status_update', $product->get_sku(), sprintf( __( 'Product status updated from [%s] to [%s]', 'wc-bsale' ), $previous_status, $new_status ), 'success' );
 				}
 			}
 
@@ -269,7 +270,7 @@ class Cron implements API_Consumer {
 					$product->set_description( esc_html( $bsale_product['description'] ) );
 					$save_product = true;
 
-					$this->notify_observers_for_cron( $product->get_sku(), __( 'Product description updated', 'wc-bsale' ), 'success' );
+					$this->notify_observers_for_cron( 'description_update', $product->get_sku(), __( 'Product description updated', 'wc-bsale' ), 'success' );
 				}
 			}
 
@@ -280,7 +281,7 @@ class Cron implements API_Consumer {
 			if ( $sync_stock || $sync_price ) {
 				// For the stock sync, there must be an office ID set in the stock settings
 				if ( ! $this->stock_settings['office_id'] ) {
-					$this->notify_observers_for_cron( '', __( 'No office ID set in the stock settings for stock sync', 'wc-bsale' ), 'warning' );
+					$this->notify_observers_for_cron( '', '', __( 'No office ID set in the stock settings for stock sync', 'wc-bsale' ), 'warning' );
 
 					$sync_stock = false;
 				}
@@ -340,7 +341,7 @@ class Cron implements API_Consumer {
 			}
 		}
 
-		$this->notify_observers_for_cron( '', __( 'Cron process finished in ' . number_format( microtime( true ) - $script_start_time, 2 ) . ' seconds', 'wc-bsale' ) );
+		$this->notify_observers_for_cron( '', '', __( 'Cron process finished in ' . number_format( microtime( true ) - $script_start_time, 2 ) . ' seconds', 'wc-bsale' ) );
 
 		return $product_or_variation_updated;
 	}
@@ -355,7 +356,7 @@ class Cron implements API_Consumer {
 	 */
 	private function process_stock_sync( \WC_Product $product, API_Client $bsale_api_client ): bool {
 		if ( ! $product->managing_stock() ) {
-			$this->notify_observers_for_cron( $product->get_sku(), __( '"Manage stock" option disabled; skipping', 'wc-bsale' ) );
+			$this->notify_observers_for_cron( 'stock_update', $product->get_sku(), __( '"Manage stock" option disabled; skipping', 'wc-bsale' ) );
 
 			return false;
 		}
@@ -363,13 +364,13 @@ class Cron implements API_Consumer {
 		try {
 			$bsale_stock = $bsale_api_client->get_stock_by_identifier( $product->get_sku(), $this->stock_settings['office_id'] );
 		} catch ( \Exception $e ) {
-			$this->notify_observers_for_cron( $product->get_sku(), $e->getMessage(), 'error' );
+			$this->notify_observers_for_cron( 'stock_update', $product->get_sku(), $e->getMessage(), 'error' );
 
 			return false;
 		}
 
 		if ( ! $bsale_stock ) {
-			$this->notify_observers_for_cron( $product->get_sku(), __( 'No stock found in Bsale', 'wc-bsale' ), 'warning' );
+			$this->notify_observers_for_cron( 'stock_update', $product->get_sku(), __( 'No stock found in Bsale', 'wc-bsale' ), 'warning' );
 
 			return false;
 		}
@@ -381,7 +382,7 @@ class Cron implements API_Consumer {
 			$product->set_stock_quantity( $bsale_stock );
 			$product->save();
 
-			$this->notify_observers_for_cron( $product->get_sku(), sprintf( __( 'Stock updated from %s to %s', 'wc-bsale' ), $current_stock, $bsale_stock ), 'success' );
+			$this->notify_observers_for_cron( 'stock_update', $product->get_sku(), sprintf( __( 'Stock updated from %s to %s', 'wc-bsale' ), $current_stock, $bsale_stock ), 'success' );
 
 			return true;
 		}
@@ -402,13 +403,13 @@ class Cron implements API_Consumer {
 		try {
 			$bsale_price = $bsale_api_client->get_variant_price_from_price_list( $price_list_id, $product->get_sku() );
 		} catch ( \Exception $e ) {
-			$this->notify_observers_for_cron( $product->get_sku(), $e->getMessage(), 'error' );
+			$this->notify_observers_for_cron( 'price_update', $product->get_sku(), $e->getMessage(), 'error' );
 
 			return false;
 		}
 
 		if ( ! $bsale_price ) {
-			$this->notify_observers_for_cron( $product->get_sku(), __( 'No price found in Bsale', 'wc-bsale' ), 'warning' );
+			$this->notify_observers_for_cron( 'price_update', $product->get_sku(), __( 'No price found in Bsale', 'wc-bsale' ), 'warning' );
 
 			return false;
 		}
@@ -420,7 +421,7 @@ class Cron implements API_Consumer {
 			$product->set_regular_price( $bsale_price );
 			$product->save();
 
-			$this->notify_observers_for_cron( $product->get_sku(), sprintf( __( 'Price updated from %s to %s', 'wc-bsale' ), $current_price, $bsale_price ), 'success' );
+			$this->notify_observers_for_cron( 'price_update', $product->get_sku(), sprintf( __( 'Price updated from %s to %s', 'wc-bsale' ), $current_price, $bsale_price ), 'success' );
 
 			return true;
 		}

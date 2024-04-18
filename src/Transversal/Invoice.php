@@ -65,7 +65,7 @@ class Invoice implements API_Consumer {
 	 */
 	public function notify_observers( string $event_trigger, string $event_type, string $identifier, string $message, string $result_code = 'info' ): void {
 		foreach ( $this->observers as $observer ) {
-			$observer->update( $event_trigger, $event_type, $identifier, $message, $result_code );
+			$observer->update( 'invoice.' . $event_trigger, $event_type, $identifier, $message, $result_code );
 		}
 	}
 
@@ -90,11 +90,12 @@ class Invoice implements API_Consumer {
 	 * Won't generate an invoice if the order has already been invoiced (checked by the '_wc_bsale_invoice_details' meta data).
 	 * If the invoice is successfully generated, the invoice details will be saved in the order meta data with the '_wc_bsale_invoice_details' key.
 	 *
-	 * @param int $order_id The order ID.
+	 * @param int    $order_id      The order ID.
+	 * @param string $event_trigger The event trigger that caused the invoice generation. Default is 'order_update', referring to the order status change.
 	 *
 	 * @return bool True if the invoice was successfully generated, false otherwise.
 	 */
-	public function generate_invoice( int $order_id ): bool {
+	public function generate_invoice( int $order_id, string $event_trigger = 'order_update' ): bool {
 		$order = wc_get_order( $order_id );
 
 		if ( ! $order ) {
@@ -105,7 +106,7 @@ class Invoice implements API_Consumer {
 		$bsale_invoice_details = get_post_meta( $order_id, '_wc_bsale_invoice_details', true );
 
 		if ( $bsale_invoice_details ) {
-			$this->notify_observers( 'generate_invoice', 'invoice', $order_id, __( 'The order has already been invoiced in Bsale' ) );
+			$this->notify_observers( $event_trigger, 'invoice_generation', $order_id, __( 'The order has already been invoiced in Bsale' ) );
 
 			return false;
 		}
@@ -118,14 +119,14 @@ class Invoice implements API_Consumer {
 		try {
 			$tax_data = $bsale_api->get_tax_by_id( $tax_id );
 		} catch ( \Exception $e ) {
-			$this->notify_observers( 'generate_invoice', 'invoice', $order_id, __( 'Error getting the tax data from Bsale: )' . $e->getMessage() ), 'error' );
+			$this->notify_observers( $event_trigger, 'invoice_generation', $order_id, __( 'Error getting the tax data from Bsale: )' . $e->getMessage() ), 'error' );
 
 			return false;
 		}
 
 		if ( ! $tax_data ) {
 			// We need the tax data to calculate the net unit value. Without it, we can't generate the invoice
-			$this->notify_observers( 'generate_invoice', 'invoice', $order_id, __( 'Error getting the tax data from Bsale: The tax data was not found' ), 'error' );
+			$this->notify_observers( $event_trigger, 'invoice_generation', $order_id, __( 'Error getting the tax data from Bsale: The tax data was not found' ), 'error' );
 
 			return false;
 		}
@@ -209,7 +210,7 @@ class Invoice implements API_Consumer {
 		try {
 			$current_date = new \DateTime( 'now', new \DateTimeZone( $wordpress_timezone ) );
 		} catch ( \Exception $e ) {
-			$this->notify_observers( 'generate_invoice', 'invoice', $order_id, __( 'Error creating the DateTime object: ' . $e->getMessage() ), 'error' );
+			$this->notify_observers( $event_trigger, 'invoice_generation', $order_id, __( 'Error creating the DateTime object: ' . $e->getMessage() ), 'error' );
 
 			return false;
 		}
@@ -238,13 +239,13 @@ class Invoice implements API_Consumer {
 
 			update_post_meta( $order_id, '_wc_bsale_invoice_details', $bsale_invoice_details );
 
-			$this->notify_observers( 'generate_invoice', 'invoice', $order_id, __( 'Invoice successfully generated in Bsale' ), 'success' );
+			$this->notify_observers( $event_trigger, 'invoice_generation', $order_id, __( 'Invoice successfully generated in Bsale' ), 'success' );
 
 			return true;
 		} else {
 			$bsale_error = $bsale_api->get_last_wp_error();
 
-			$this->notify_observers( 'generate_invoice', 'invoice', $order_id, __( 'Error generating the invoice in Bsale: ' . $bsale_error->get_error_message() ), 'error' );
+			$this->notify_observers( $event_trigger, 'invoice_generation', $order_id, __( 'Error generating the invoice in Bsale: ' . $bsale_error->get_error_message() ), 'error' );
 
 			return false;
 		}
@@ -273,7 +274,7 @@ class Invoice implements API_Consumer {
 			wp_die( __( 'Invalid nonce', 'wc-bsale' ) );
 		}
 
-		$bsale_invoice = $this->generate_invoice( $post_id );
+		$bsale_invoice = $this->generate_invoice( $post_id, 'meta_box_button' );
 
 		if ( $bsale_invoice ) {
 			// Set a transient that can be used to show a success message
